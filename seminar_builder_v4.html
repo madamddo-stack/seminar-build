@@ -42,11 +42,11 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .tb-left{display:flex;align-items:center;gap:10px;}
 .tb-logo-v4{
-  width:32px;height:32px;border-radius:8px;
-  background:#131927;color:#F9FAFB;
+  width:35px;height:35px;border-radius:50%;
+  background:#EEF2FF;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:800;flex-shrink:0;font-family:'Lexend',sans-serif;
 }
+.tb-logo-v4 img{height:18px;width:auto;display:block;}
 .tb-brand-v4{font-size:16px;font-weight:700;color:var(--text-pri);white-space:nowrap;}
 .tb-slash-v4{font-size:14px;color:var(--text-muted);}
 .tb-project{
@@ -937,8 +937,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .bn-stab.active{background:#131927;border-color:#131927;color:#fff;}
 .bn-stab:hover:not(.active){color:var(--text-sec);border-color:#D2D5DB;background:var(--bg-rail);}
-.bn-panel{padding:16px 14px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
-.bn-field-group{display:flex;flex-direction:column;gap:5px;}
+.bn-panel{padding:20px;display:flex;flex-direction:column;gap:24px;overflow-y:auto;}
+.bn-field-group{display:flex;flex-direction:column;gap:8px;}
 .bn-label{font-size:15px;font-weight:700;color:var(--text-sec);letter-spacing:.01em;
   font-family:inherit;}
 .bn-input,.bn-textarea{
@@ -1027,7 +1027,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 
 /* ─── 배너 폰트 사이즈 컨트롤 ─── */
-.bn-size-row{display:flex;align-items:center;gap:4px;}
+.bn-size-row{display:flex;align-items:center;gap:4px;margin-top:0;}
+.bn-field-group .bn-size-row+.bn-size-row{margin-top:16px;}
 .bn-size-lbl{font-size:14px;color:#666;min-width:48px;}
 .bn-sz-btn{
   width:22px;height:22px;border-radius:4px;border:1px solid var(--border);
@@ -1117,7 +1118,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .hist-sub{font-size:11px;color:#555;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hist-date{font-size:12px;color:#555;margin-top:3px;white-space:nowrap;}
 .hist-btns{display:flex;gap:8px;flex-shrink:0;}
-.hist-restore{font-size:13px;font-weight:700;padding:8px 18px;border-radius:6px;border:1px solid #2662e2;background:rgba(38,98,226,.15);color:#4d8ef5;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.hist-restore{font-size:13px;font-weight:700;padding:8px 18px;border-radius:6px;border:1px solid #2662e2;background:#fff;color:#2662e2;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .hist-restore:hover{background:#2662e2;color:#fff;}
 .hist-del{font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;border:1px solid #2a2a2a;background:none;color:#444;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .hist-del:hover{border-color:#ff4444;color:#ff4444;}
@@ -1179,7 +1180,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 <!-- ═══════════ v4 상단 바 ═══════════ -->
 <header id="topbar">
   <div class="tb-left">
-    <div class="tb-logo-v4">S</div>
+    <div class="tb-logo-v4"><img src="img/bi_jk.svg" alt="잡코리아"></div>
     <span class="tb-brand-v4">세미나 빌더</span>
     <span class="tb-slash-v4">/</span>
     <input class="tb-project" id="project-name" value="봄세미나 2026 – 1차 안내" spellcheck="false">
@@ -1259,7 +1260,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepBnSize('att',1)">＋</button>
         <span class="bn-size-lbl">px</span>
       </div>
-      <div class="bn-size-row" style="margin-top:5px">
+      <div class="bn-size-row">
         <span class="bn-size-lbl">메인타이틀</span>
         <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepBnSize('tit',-1)">−</button>
         <input class="bn-sz-inp" id="bn-tit-size" type="number" value="24" min="10" max="60" oninput="rb()">
@@ -3251,6 +3252,7 @@ function collectHistState(){
     bg:     (root && root.style.background) || '#cfd4e2',
     titClr: (eid('ed-title') && eid('ed-title').style.color) || '#2662e2',
     attClr: (eid('ed-att')   && eid('ed-att').style.color)   || '#243254',
+    projectName: (eid('project-name') || {}).value || '',
     guideTitle:  (eid('ed-title') || {}).innerText || '',
     guideSub:    (eid('ed-sub')   || {}).innerText || '',
     fields: {}
@@ -3303,14 +3305,13 @@ function renderHistory(){
   list.forEach(function(s){
     var card = document.createElement('div');
     card.className = 'hist-card';
-    var titleText = s.guideTitle || s.fields['bn-title'] || '(제목 없음)';
-    var subText   = s.fields['bn-att'] || s.guideSub || '';
+    var titleText = s.projectName || s.guideTitle || s.fields['bn-title'] || '(제목 없음)';
+    var metaText  = s.date || '';
     card.innerHTML =
       '<div class="hist-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'+
       '<div class="hist-info">'+
         '<div class="hist-title">'+escHtml(titleText.slice(0,60))+'</div>'+
-        (subText ? '<div class="hist-sub">'+escHtml(subText.slice(0,80))+'</div>' : '')+
-        '<div class="hist-date">'+escHtml(s.date||'')+'</div>'+
+        '<div class="hist-date">'+escHtml(metaText)+'</div>'+
       '</div>'+
       '<div class="hist-btns">'+
         '<button class="hist-restore" onclick="restoreHistory('+s.id+');event.stopPropagation()">불러오기</button>'+
