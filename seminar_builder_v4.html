@@ -2,15 +2,21 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>세미나 빌더 v4 — 인라인 에디터</title>
+<title>세미나 빌더 — 잡코리아</title>
 <link href="https://cdn.jsdelivr.net/gh/webfontworld/paperlogy/Paperlogy.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <style>
 /* ─── Reset ──────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;}
+.mi{font-family:'Material Icons Round';font-style:normal;font-weight:normal;
+    font-size:18px;line-height:1;display:inline-flex;align-items:center;
+    vertical-align:middle;user-select:none;}
+.mi-sm{font-size:16px;}
+.mi-xs{font-size:14px;}
 html{font-size:14px;}
 body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;height:100vh;overflow:hidden;padding-top:0;}
 
@@ -148,8 +154,13 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   border-left:1px solid var(--border);
   display:flex;flex-direction:column;
   overflow-y:auto;
-  padding:20px 16px;
 }
+#right-panel>.rp-sec,
+#right-panel>.rp-divider{
+  padding-left:16px;padding-right:16px;
+}
+#right-panel>.rp-sec:first-child{padding-top:20px;}
+#right-panel>#edit-hint{margin-top:auto;}
 .rp-sec{padding-bottom:20px;}
 .rp-title{
   font-size:12px;font-weight:800;letter-spacing:.1em;
@@ -331,7 +342,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   box-shadow:0 0 0 2px rgba(66,133,244,0.45);
 }
 #badge-img{
-  display:none;
+  display:block;
   height:auto;
   max-height:50px;
   object-fit:contain;
@@ -533,7 +544,11 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   cursor:text;
 }
 .det-div{width:1px;background:#e0e0e0;flex-shrink:0;}
-.det-content{flex:1;min-width:0;font-size:16px;color:#111;line-height:1.6;padding:14px 0;}
+.det-content{flex:1;min-width:0;font-size:16px;color:#111;line-height:1.6;letter-spacing:-0.02em;padding:14px 0;}
+.det-content p{display:flex;align-items:flex-start;gap:6px;margin:0 0 0.75em 0;}
+.det-content p:last-child{margin-bottom:0;}
+.det-content p .bul{flex-shrink:0;line-height:1.3;}
+.det-content p .bul-txt{flex:1;line-height:1.3;}
 
 /* 행 컨트롤 버튼 (우측 상단에 hover 시 표시) */
 .row-ctrl{
@@ -643,16 +658,20 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .sc-unit{ font-size:9px;color:var(--text-muted);margin-left:2px; }
 
 #edit-hint{
-  position:fixed;bottom:24px;right:24px;
-  background:rgba(20,20,20,0.92);
-  border:1px solid #2a2a2a;
-  border-radius:12px;padding:12px 16px;
-  font-size:10px;color:#555;
-  line-height:2;z-index:8000;
-  pointer-events:none;
-  transition:opacity .5s;
+  padding:16px 20px 20px;
+  border-top:1px solid var(--border);
+  font-size:12px;color:var(--text-sec);
+  line-height:1.9;
+  flex-shrink:0;
+  background:var(--bg-panel);
 }
-#edit-hint span{color:#888;}
+#edit-hint .hint-title{
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;
+}
+#edit-hint .hint-row{display:flex;align-items:center;gap:8px;}
+#edit-hint .hint-icon{width:16px;text-align:center;flex-shrink:0;font-size:13px;}
+#edit-hint .hint-txt{color:var(--text-sec);font-size:12px;}
 
 /* ─── 인라인 서식 툴바 ─────────────────────────── */
 #fmt-bar{
@@ -777,10 +796,11 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   display:none;
 }
 .speaker-photo-ph{
-  font-size:11px;color:#bbb;
-  text-align:center;line-height:1.6;
+  font-size:9px;color:#bbb;
+  text-align:center;line-height:1.4;
   pointer-events:none;
   font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
 }
 .speaker-photo-btn{
   display:none;
@@ -1190,7 +1210,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
     <button class="tb-btn-ghost-v4" onclick="copyShareUrl()">URL 저장</button>
     <div class="tb-btn-dl-wrap">
       <button class="tb-btn-dark-v4 main" onclick="handleMainDl()">다운로드</button>
-      <button class="tb-btn-dark-v4 caret" onclick="toggleDlMenu()">▾</button>
+      <button class="tb-btn-dark-v4 caret" onclick="toggleDlMenu()"><span class="mi mi-xs">expand_more</span></button>
       <div class="dl-menu" id="dl-menu" style="display:none">
         <button onclick="dlGuidePng();closeDlMenu()">안내문 PNG</button>
         <button onclick="pngSaveAll();closeDlMenu()">배너 4종 PNG</button>
@@ -1288,7 +1308,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   <div class="bn-panel" id="bn-img" style="display:none">
     <div class="bn-field-group">
       <label class="bn-label">배너 이미지</label>
-      <button class="bn-file-btn" onclick="eid('bn-img-input').click()">📷 이미지 업로드</button>
+      <button class="bn-file-btn" onclick="eid('bn-img-input').click()"><span class="mi mi-sm" style="margin-right:5px;vertical-align:middle;">image</span>이미지 업로드</button>
       <input type="file" id="bn-img-input" accept="image/*" style="display:none" onchange="loadBnImg(this)">
       <button class="bn-file-btn" style="margin-top:6px" onclick="syncBnImgFromGuide()">↓ 안내문 이미지 사용</button>
     </div>
@@ -1323,21 +1343,21 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   <div class="bn-panel" id="bn-save" style="display:none">
     <div class="bn-field-group">
       <label class="bn-label">4종 일괄 저장</label>
-      <button class="bn-save-all" onclick="pngSaveAll()">⬇ 4종 PNG 저장</button>
+      <button class="bn-save-all" onclick="pngSaveAll()"><span class="mi mi-sm">file_download</span> 4종 PNG 저장</button>
     </div>
     <div class="bn-field-group" style="margin-top:20px">
       <label class="bn-label">개별 저장</label>
-      <button class="bn-save-btn" onclick="pngSaveBanner('v200')">⬇ 기업라운지좌측 (200×275)</button>
-      <button class="bn-save-btn" onclick="pngSaveBanner('v170')">⬇ 기업검색좌측 (170×235)</button>
-      <button class="bn-save-btn" onclick="pngSaveBanner('strip')">⬇ 기업라운지띠 (940×80)</button>
-      <button class="bn-save-btn" onclick="pngSaveBanner('news')">⬇ 뉴스레터 (535×274)</button>
+      <button class="bn-save-btn" onclick="pngSaveBanner('v200')"><span class="mi mi-sm">file_download</span> 기업라운지좌측 (200×275)</button>
+      <button class="bn-save-btn" onclick="pngSaveBanner('v170')"><span class="mi mi-sm">file_download</span> 기업검색좌측 (170×235)</button>
+      <button class="bn-save-btn" onclick="pngSaveBanner('strip')"><span class="mi mi-sm">file_download</span> 기업라운지띠 (940×80)</button>
+      <button class="bn-save-btn" onclick="pngSaveBanner('news')"><span class="mi mi-sm">file_download</span> 뉴스레터 (535×274)</button>
     </div>
     <div class="bn-field-group" style="margin-top:16px">
       <label class="bn-label">클립보드 복사</label>
-      <button class="bn-save-btn" onclick="pngCopyBanner('v200')">📋 기업라운지좌측</button>
-      <button class="bn-save-btn" onclick="pngCopyBanner('v170')">📋 기업검색좌측</button>
-      <button class="bn-save-btn" onclick="pngCopyBanner('strip')">📋 기업라운지띠</button>
-      <button class="bn-save-btn" onclick="pngCopyBanner('news')">📋 뉴스레터</button>
+      <button class="bn-save-btn" onclick="pngCopyBanner('v200')"><span class="mi mi-sm">content_copy</span> 기업라운지좌측</button>
+      <button class="bn-save-btn" onclick="pngCopyBanner('v170')"><span class="mi mi-sm">content_copy</span> 기업검색좌측</button>
+      <button class="bn-save-btn" onclick="pngCopyBanner('strip')"><span class="mi mi-sm">content_copy</span> 기업라운지띠</button>
+      <button class="bn-save-btn" onclick="pngCopyBanner('news')"><span class="mi mi-sm">content_copy</span> 뉴스레터</button>
     </div>
   </div>
 </aside><!-- /side-panel -->
@@ -1358,7 +1378,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
       <div class="jk-upload-area" onclick="triggerJkUpload()" title="잡코리아 로고 PNG 등록">
         <img class="jk-img" id="jk-img-top" src="img/jk-logo.png" alt="잡코리아 로고" style="display:block;">
         <span class="jk-ph" id="jk-ph-top" style="display:none;">잡코리아 로고</span>
-        <span class="logo-change-btn">🔄 변경</span>
+        <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
       </div>
       <!-- 콜라보 표기 (9px 고정) -->
       <span class="collab-sep">
@@ -1368,7 +1388,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
       <div class="partner-upload-area" onclick="triggerPartnerUpload()" title="주관사 로고 PNG 등록">
         <img class="partner-img" id="partner-img-top" alt="주관사 로고">
         <span class="partner-ph" id="partner-ph-top">주관사 로고 PNG</span>
-        <span class="logo-change-btn">🔄 변경</span>
+        <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
       </div>
     </div>
   </div>
@@ -1377,8 +1397,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   <div style="display:flex;justify-content:center;">
     <div class="badge-upload-area" onclick="triggerBadgeUpload()" title="뱃지 이미지 변경">
       <img id="badge-img" src="img/badge.png" alt="HR세미나 뱃지">
-      <span class="badge-ph" id="badge-ph">뱃지 이미지 등록</span>
-      <span class="badge-change-btn">🔄 변경</span>
+      <span class="badge-ph" id="badge-ph" style="display:none;">뱃지 이미지 등록</span>
+      <span class="badge-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
     </div>
     <input type="file" id="badge-input" accept="image/png,image/*" style="display:none" onchange="loadBadgeImg(this)">
   </div>
@@ -1410,9 +1430,12 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
       style="height:426px;width:900px;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;margin-top:32px;">
       <img id="il-img" src="" alt="일러스트"
         style="max-width:900px;max-height:426px;object-fit:contain;display:none;position:relative;z-index:1;">
-      <div id="il-placeholder" style="font-size:80px;opacity:0.12;user-select:none;pointer-events:none;">🖼</div>
+      <div id="il-placeholder" style="opacity:0.18;user-select:none;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <span class="mi" style="font-size:72px;color:#555;">add_photo_alternate</span>
+        <span style="font-size:13px;color:#888;font-family:inherit;">이미지를 드래그하거나 클릭해서 업로드</span>
+      </div>
       <div class="img-overlay">
-        <button class="img-upload-btn" onclick="triggerUpload('illust')">📷 이미지 업로드</button>
+        <button class="img-upload-btn" onclick="triggerUpload('illust')"><span class="mi mi-sm" style="margin-right:5px;">image</span>이미지 업로드</button>
         <span class="img-overlay-desc">투명 PNG 권장 · 900×426px</span>
       </div>
     </div>
@@ -1498,7 +1521,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="jk-upload-area" onclick="triggerJkUpload()" title="잡코리아 로고 PNG 등록">
           <img class="jk-img bottom-img" id="jk-img-bottom" src="img/jk-logo.png" alt="잡코리아 로고" style="display:block;">
           <span class="jk-ph" id="jk-ph-bottom" style="display:none;">잡코리아 로고</span>
-          <span class="logo-change-btn">🔄 변경</span>
+          <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
         </div>
         <!-- 콜라보 표기 (9px 고정, 상단과 동일 이미지 참조) -->
         <span class="collab-sep bottom">
@@ -1508,7 +1531,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="partner-upload-area" onclick="triggerPartnerUpload()" title="주관사 로고 PNG 등록">
           <img class="partner-img bottom-img" id="partner-img-bottom" alt="주관사 로고">
           <span class="partner-ph" id="partner-ph-bottom">주관사 로고 PNG</span>
-          <span class="logo-change-btn">🔄 변경</span>
+          <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
         </div>
       </div>
     </div>
@@ -1531,8 +1554,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
           <span class="bn-block-name">기업라운지좌측</span>
           <span class="bn-block-size">200 × 275 px</span>
           <div class="bn-block-btns">
-            <button class="bn-block-btn" onclick="pngSaveBanner('v200')">⬇ 저장</button>
-            <button class="bn-block-btn" onclick="pngCopyBanner('v200')">📋 복사</button>
+            <button class="bn-block-btn" onclick="pngSaveBanner('v200')"><span class="mi mi-sm">file_download</span> 저장</button>
+            <button class="bn-block-btn" onclick="pngCopyBanner('v200')"><span class="mi mi-sm">content_copy</span> 복사</button>
           </div>
         </div>
         <div class="bn-stage-wrap" id="bn-wrap-v200">
@@ -1541,7 +1564,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="bn-tit-ovr">
           <div class="bn-tit-ovr-head">
             <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v200')">↩ 초기화</button>
+            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v200')"><span class="mi mi-xs">undo</span> 초기화</button>
           </div>
           <div class="bn-tit-ovr-row">
             <span class="bn-tit-ovr-lbl">강조</span>
@@ -1576,8 +1599,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
           <span class="bn-block-name">기업검색좌측</span>
           <span class="bn-block-size">170 × 235 px</span>
           <div class="bn-block-btns">
-            <button class="bn-block-btn" onclick="pngSaveBanner('v170')">⬇ 저장</button>
-            <button class="bn-block-btn" onclick="pngCopyBanner('v170')">📋 복사</button>
+            <button class="bn-block-btn" onclick="pngSaveBanner('v170')"><span class="mi mi-sm">file_download</span> 저장</button>
+            <button class="bn-block-btn" onclick="pngCopyBanner('v170')"><span class="mi mi-sm">content_copy</span> 복사</button>
           </div>
         </div>
         <div class="bn-stage-wrap" id="bn-wrap-v170">
@@ -1586,7 +1609,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="bn-tit-ovr">
           <div class="bn-tit-ovr-head">
             <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v170')">↩ 초기화</button>
+            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v170')"><span class="mi mi-xs">undo</span> 초기화</button>
           </div>
           <div class="bn-tit-ovr-row">
             <span class="bn-tit-ovr-lbl">강조</span>
@@ -1621,8 +1644,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
           <span class="bn-block-name">기업라운지띠</span>
           <span class="bn-block-size">940 × 80 px</span>
           <div class="bn-block-btns">
-            <button class="bn-block-btn" onclick="pngSaveBanner('strip')">⬇ 저장</button>
-            <button class="bn-block-btn" onclick="pngCopyBanner('strip')">📋 복사</button>
+            <button class="bn-block-btn" onclick="pngSaveBanner('strip')"><span class="mi mi-sm">file_download</span> 저장</button>
+            <button class="bn-block-btn" onclick="pngCopyBanner('strip')"><span class="mi mi-sm">content_copy</span> 복사</button>
           </div>
         </div>
         <div class="bn-stage-wrap" id="bn-wrap-strip">
@@ -1631,7 +1654,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="bn-tit-ovr">
           <div class="bn-tit-ovr-head">
             <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('strip')">↩ 초기화</button>
+            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('strip')"><span class="mi mi-xs">undo</span> 초기화</button>
           </div>
           <textarea class="bn-tit-ovr-textarea" id="tov-strip"
             placeholder="공통 타이틀 사용" rows="2"
@@ -1659,8 +1682,8 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
           <span class="bn-block-name">뉴스레터</span>
           <span class="bn-block-size">535 × 274 px</span>
           <div class="bn-block-btns">
-            <button class="bn-block-btn" onclick="pngSaveBanner('news')">⬇ 저장</button>
-            <button class="bn-block-btn" onclick="pngCopyBanner('news')">📋 복사</button>
+            <button class="bn-block-btn" onclick="pngSaveBanner('news')"><span class="mi mi-sm">file_download</span> 저장</button>
+            <button class="bn-block-btn" onclick="pngCopyBanner('news')"><span class="mi mi-sm">content_copy</span> 복사</button>
           </div>
         </div>
         <div class="bn-stage-wrap" id="bn-wrap-news">
@@ -1669,7 +1692,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <div class="bn-tit-ovr">
           <div class="bn-tit-ovr-head">
             <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('news')">↩ 초기화</button>
+            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('news')"><span class="mi mi-xs">undo</span> 초기화</button>
           </div>
           <div class="bn-tit-ovr-row">
             <span class="bn-tit-ovr-lbl">강조</span>
@@ -1769,6 +1792,13 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
       <span class="ins-val" id="ins-val-chk">#1344a0</span>
     </div>
   </div>
+  <!-- 사용 가이드 힌트 -->
+  <div id="edit-hint">
+    <div class="hint-title">How to use</div>
+    <div class="hint-row"><span class="hint-icon mi mi-sm">edit</span><span class="hint-txt">텍스트 클릭 → 바로 수정</span></div>
+    <div class="hint-row"><span class="hint-icon mi mi-sm">image</span><span class="hint-txt">이미지 위 호버 → 파일 업로드</span></div>
+    <div class="hint-row"><span class="hint-icon mi mi-sm">file_download</span><span class="hint-txt">PNG 저장 → 고해상도 내보내기</span></div>
+  </div>
 </aside>
 
 </div><!-- /main-area -->
@@ -1820,13 +1850,6 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 <!-- 토스트 -->
 <div class="toast" id="toast"></div>
 
-<!-- 편집 힌트 -->
-<div id="edit-hint">
-  <span>✏️</span> 텍스트 클릭 → 바로 수정<br>
-  <span>🎨</span> 상단 스와치 → 색상 변경<br>
-  <span>🖼</span> 이미지 위 호버 → 파일 업로드<br>
-  <span>⬇</span> PNG 저장 → 고해상도 내보내기
-</div>
 
 <script>
 /* ══════════════════════════════════════════
@@ -2825,8 +2848,8 @@ var _defaultRows = [
   { label:'신청방법', html:'하단 <b>[참가 신청하기]</b> 클릭하면 신청 완료<br><span style="color:#999;">▸ 기업회원 로그인 후 신청 가능</span>' },
   { label:'교육내용', content:'1. 일하는 사람 기본법·근로자 추정제의 핵심 내용과 쟁점 정리\n2. 프리랜서·플랫폼 종사자 활용 구조 변화에 따른 기업 대응 방향\n3. 근로자 추정제 도입에 따른 법적 리스크 점검\n4. 인력 운용 구조와 내부 시스템 재정비를 위한 실무 기준 마련' },
   { label:'강사소개', type:'speaker', name:'임인영 변호사', desc:'노동법 전문 변호사 · 근로자 추정제 관련 기업 자문 다수' },
-  { label:'참가안내', content:'▪ 본 세미나는 온라인 실시간 스트리밍 방식으로 제공되며, 교재는 세미나 당일 PDF 파일 형태로 제공됩니다.(사전 신청이 정원을 초과하는 경우 선착순 마감될 수 있습니다)\n\n▪ 온라인으로 진행되기 때문에 PC, 노트북, 태블릿, 스마트폰 등 수강을 위한 기기를 준비해 주세요. 원활한 접속을 위해 가급적 PC 및 노트북을 이용하고 유선 네트워크 접속을 권장 드리며, 강연 음성 청취를 위해 개인 이어폰(이어셋 및 헤드셋)이 필요할 수 있습니다.\n\n▪ 사전 신청자에 대해 세미나 실시 당일 오전에 참여경로를 이메일과 문자 메시지로 제공해 드립니다.' },
-  { label:'유의사항', content:'▪ 2명 이상이 하나의 아이디로 동시 접속할 수 없으므로 개별 신청해 주시기 바랍니다.\n\n▪ 참가 신청 후 불참하는 경우 세미나 신청관리 \'취소 접수\' 또는 아래 메일로 연락 바랍니다.\n\n▪ 사내 PC 혹은 네트워크 사용 시 보안 소프트웨어, 외부 사이트 접속 차단 등 정상적인 접속이 되지 않을 수 있습니다. 사전에 사내 네트워크 담당자에게 확인하여 주시기 바랍니다.' },
+  { label:'참가안내', html:'<p><span class="bul">▪</span><span class="bul-txt">본 세미나는 온라인 실시간 스트리밍 방식으로 제공되며, 교재는 세미나 당일 PDF 파일 형태로 제공됩니다.(사전 신청이 정원을 초과하는 경우 선착순 마감될 수 있습니다)</span></p><p><span class="bul">▪</span><span class="bul-txt">온라인으로 진행되기 때문에 PC, 노트북, 태블릿, 스마트폰 등 수강을 위한 기기를 준비해 주세요. 원활한 접속을 위해 가급적 PC 및 노트북을 이용하고 유선 네트워크 접속을 권장 드리며, 강연 음성 청취를 위해 개인 이어폰(이어셋 및 헤드셋)이 필요할 수 있습니다.</span></p><p><span class="bul">▪</span><span class="bul-txt">사전 신청자에 대해 세미나 실시 당일 오전에 참여경로를 이메일과 문자 메시지로 제공해 드립니다.</span></p>' },
+  { label:'유의사항', html:'<p><span class="bul">▪</span><span class="bul-txt">2명 이상이 하나의 아이디로 동시 접속할 수 없으므로 개별 신청해 주시기 바랍니다.</span></p><p><span class="bul">▪</span><span class="bul-txt">참가 신청 후 불참하는 경우 세미나 신청관리 \'취소 접수\' 또는 아래 메일로 연락 바랍니다.</span></p><p><span class="bul">▪</span><span class="bul-txt">사내 PC 혹은 네트워크 사용 시 보안 소프트웨어, 외부 사이트 접속 차단 등 정상적인 접속이 되지 않을 수 있습니다. 사전에 사내 네트워크 담당자에게 확인하여 주시기 바랍니다.</span></p>' },
   { label:'문의',    content:'HR세미나 담당자  hrforum@jobkorea.co.kr' }
 ];
 
@@ -2903,8 +2926,8 @@ function makeSpeakerRow(data){
       '<div class="speaker-content">'+
         '<div class="speaker-photo-wrap" onclick="triggerSpeakerPhoto(this)" title="강사 사진 등록">'+
           '<img class="speaker-photo" src="" alt="강사 사진">'+
-          '<div class="speaker-photo-ph">👤<br><span style="font-size:9px;">사진 등록</span></div>'+
-          '<div class="speaker-photo-btn">🔄 변경</div>'+
+          '<div class="speaker-photo-ph"><span class="mi" style="font-size:32px;color:#ccc;">person</span><br><span style="font-size:9px;">사진 등록</span></div>'+
+          '<div class="speaker-photo-btn"><span class="mi mi-xs">autorenew</span> 변경</div>'+
         '</div>'+
         '<div class="speaker-info">'+
           '<div class="ed speaker-name" contenteditable="true" data-ph="강사 이름">'+(data.name||'강사 이름')+'</div>'+
@@ -3144,8 +3167,8 @@ function eid(id){ return document.getElementById(id); }
 (function(){
   var img = eid('badge-img');
   if(!img) return;
-  img.addEventListener('load',  function(){ img.style.display='block'; eid('badge-ph').style.display='none'; });
-  img.addEventListener('error', function(){ img.style.display='none';  eid('badge-ph').style.display=''; });
+  img.addEventListener('error', function(){ img.style.display='none'; eid('badge-ph').style.display=''; });
+  if(img.complete && img.naturalWidth) { img.style.display='block'; eid('badge-ph').style.display='none'; }
 })();
 
 /* 잡코리아 로고 기본 이미지 로드 실패 시 placeholder 표시 */
