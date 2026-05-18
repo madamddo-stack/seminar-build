@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/seminar_builder_v4.html" }
+  ]
+}
