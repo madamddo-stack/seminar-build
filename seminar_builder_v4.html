@@ -1427,16 +1427,17 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 
     <!-- 일러스트 업로드 영역 -->
     <div class="img-area" id="illust-area"
-      style="height:426px;width:900px;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;margin-top:32px;">
+      style="min-height:220px;width:900px;display:flex;align-items:center;justify-content:center;background:transparent;position:relative;margin-top:32px;">
       <img id="il-img" src="" alt="일러스트"
-        style="max-width:900px;max-height:426px;object-fit:contain;display:none;position:relative;z-index:1;">
-      <div id="il-placeholder" style="user-select:none;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <span class="mi" style="font-size:72px;color:#9CA3AF;">add_photo_alternate</span>
+        style="max-width:900px;width:100%;height:auto;object-fit:contain;display:none;position:relative;z-index:1;">
+      <div id="il-placeholder" style="user-select:none;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:40px 0;">
+        <span class="mi" style="font-size:72px;color:#D1D5DB;">add_photo_alternate</span>
         <span style="font-size:13px;color:#9CA3AF;font-family:inherit;">이미지를 드래그하거나 클릭해서 업로드</span>
+        <span style="font-size:12px;color:#D1D5DB;font-family:inherit;">(배경 투명한 PNG, 가로 최대 900px, 세로 자유)</span>
       </div>
       <div class="img-overlay">
         <button class="img-upload-btn" onclick="triggerUpload('illust')"><span class="mi mi-sm" style="margin-right:5px;">image</span>이미지 업로드</button>
-        <span class="img-overlay-desc">투명 PNG 권장 · 900×426px</span>
+        <span class="img-overlay-desc">투명 PNG · 가로 최대 900px · 세로 자유</span>
       </div>
     </div>
     <input type="file" id="illust-input" accept="image/*" style="display:none" onchange="loadImg(this,'illust')">
@@ -2101,6 +2102,11 @@ function loadImg(input, type){
       img.src = e.target.result;
       img.style.display = 'block';
       if(ph) ph.style.display = 'none';
+      /* 이미지 실제 크기에 맞게 영역 높이 자동 조정 */
+      img.onload = function(){
+        var area = eid('illust-area');
+        if(area) area.style.minHeight = '';
+      };
     }
   };
   reader.readAsDataURL(file);
