@@ -782,11 +782,11 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   border-radius:50%;
   flex-shrink:0;
   overflow:hidden;
-  background:#ebebeb;
+  background:#F9FAFB;
   cursor:pointer;
   position:relative;
   display:flex;align-items:center;justify-content:center;
-  border:2px solid #ddd;
+  border:1.5px dashed #D1D5DB;
   transition:border-color .15s;
 }
 .ed-mode .speaker-photo-wrap:hover{ border-color:#4285f4; }
@@ -796,11 +796,11 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   display:none;
 }
 .speaker-photo-ph{
-  font-size:9px;color:#bbb;
+  font-size:9px;color:#9CA3AF;
   text-align:center;line-height:1.4;
   pointer-events:none;
   font-family:inherit;
-  display:flex;flex-direction:column;align-items:center;gap:2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
 }
 .speaker-photo-btn{
   display:none;
@@ -2932,7 +2932,7 @@ function makeSpeakerRow(data){
       '<div class="speaker-content">'+
         '<div class="speaker-photo-wrap" onclick="triggerSpeakerPhoto(this)" title="강사 사진 등록">'+
           '<img class="speaker-photo" src="" alt="강사 사진">'+
-          '<div class="speaker-photo-ph"><span class="mi" style="font-size:32px;color:#ccc;">person</span><br><span style="font-size:9px;">사진 등록</span></div>'+
+          '<div class="speaker-photo-ph"><span class="mi" style="font-size:30px;color:#D1D5DB;">person</span><span style="font-size:9px;color:#9CA3AF;">사진 등록</span></div>'+
           '<div class="speaker-photo-btn"><span class="mi mi-xs">autorenew</span> 변경</div>'+
         '</div>'+
         '<div class="speaker-info">'+
