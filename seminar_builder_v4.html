@@ -672,7 +672,7 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 /* ─── 팔레트 바 ──────────────────────────── */
 .palette-bar{
   position:fixed;top:56px;left:0;right:0;z-index:8990;
-  height:40px;
+  height:32px;
   background:#fff;
   border-bottom:1px solid #E5E7EB;
   display:flex;align-items:center;
@@ -682,15 +682,11 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
   scrollbar-width:none;
 }
 .palette-bar::-webkit-scrollbar{display:none;}
-.pal-label{
-  font-size:10px;color:#9EA2AE;font-weight:600;
-  letter-spacing:.05em;white-space:nowrap;
-  margin-right:4px;flex-shrink:0;
-}
+.pal-label{ display:none; }
 /* pill 형태 팔레트 스와치 */
 .pal-sw{
   display:flex;
-  width:72px;height:26px;
+  width:60px;height:20px;
   border-radius:100px;
   overflow:hidden;
   cursor:pointer;
@@ -2003,14 +1999,6 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
       <span class="ins-lbl" id="ins-lbl-title">타이틀</span>
       <div class="ins-sw" id="ins-sw-title"><input type="color" oninput="applyTitleC(this.value);updateInspect()"></div>
       <span class="ins-val" id="ins-val-title">#2662e2</span>
-    </div>
-    <div class="ins-row" style="justify-content:center;margin:2px 0;">
-      <button id="btn-swap-tit" onclick="swapTitles()" title="메인타이틀 ↕ 소타이틀 순서 변경"
-        style="display:flex;align-items:center;gap:4px;background:none;border:1px dashed #D1D5DB;border-radius:6px;padding:3px 10px;font-size:11px;color:#9CA3AF;cursor:pointer;font-family:inherit;transition:all .15s;"
-        onmouseover="this.style.borderColor='#4285f4';this.style.color='#4285f4';"
-        onmouseout="this.style.borderColor='#D1D5DB';this.style.color='#9CA3AF';">
-        <span class="mi mi-xs">swap_vert</span> 순서 변경
-      </button>
     </div>
     <div class="ins-row">
       <span class="ins-lbl" id="ins-lbl-sub">소타이틀</span>
