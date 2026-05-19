@@ -294,9 +294,23 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   color:rgba(0,0,0,0.2);
   pointer-events:none;
 }
-/* 빈 ed-att 숨기기 */
+/* 빈 ed-att: 미리보기·출력 시 완전 숨김 */
 #ed-att:empty:not(:focus){
   display:none !important;
+}
+/* 에디터 모드에서는 빈 경우에도 ghost 영역 유지 */
+.ed-mode #ed-att:empty:not(:focus){
+  display:block !important;
+  border:1.5px dashed #D1D5DB;
+  border-radius:8px;
+  min-height:56px;
+  opacity:0.6;
+}
+.ed-mode #ed-att:empty:not(:focus)::before{
+  content:attr(data-ph);
+  color:#aaa;
+  font-size:20px;
+  font-weight:400;
 }
 
 /* ─── 이미지 영역 ──────────────────────────────── */
