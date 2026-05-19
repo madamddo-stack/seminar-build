@@ -302,7 +302,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   background:#fff;border:1px solid #e0e0e0;border-radius:7px;
   padding:3px 4px;box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:100;
 }
-.ed-mode .tit-wrap:hover .tit-ctrl{display:flex;}
+/* tit-ctrl 호버는 JS로 관리 (CSS hover는 absolute 이탈 시 끊김 문제) */
 .tit-ctrl-btn{
   width:22px;height:22px;display:flex;align-items:center;justify-content:center;
   background:none;border:none;border-radius:4px;
@@ -2100,6 +2100,27 @@ function _updateSwapLabels(){
     lbl2.textContent = '소타이틀';
   }
 }
+function initTitCtrlHover(){
+  ['tit-wrap-title','tit-wrap-sub'].forEach(function(id){
+    var wrap = eid(id);
+    if(!wrap) return;
+    var ctrl = wrap.querySelector('.tit-ctrl');
+    if(!ctrl) return;
+    function isEdMode(){ return document.getElementById('guide-root') && document.getElementById('guide-root').classList.contains('ed-mode'); }
+    function show(){ if(isEdMode()) ctrl.style.display='flex'; }
+    function hide(e){
+      /* relatedTarget이 ctrl 안이면 숨기지 않음 */
+      if(e && (ctrl===e.relatedTarget || ctrl.contains(e.relatedTarget))) return;
+      ctrl.style.display='';
+    }
+    wrap.addEventListener('mouseenter', show);
+    wrap.addEventListener('mouseleave', hide);
+    ctrl.addEventListener('mouseleave', function(e){
+      /* ctrl에서 wrap 밖으로 나갈 때만 숨김 */
+      if(!wrap.contains(e.relatedTarget) && wrap!==e.relatedTarget) ctrl.style.display='';
+    });
+  });
+}
 function applyTitSwap(swapped){
   var wTitle = eid('tit-wrap-title');
   var wSub   = eid('tit-wrap-sub');
@@ -3495,6 +3516,9 @@ function clearHistory(){
 
   /* 히스토리 탭 방문 시 draft 배너 체크 */
   checkDraftOnLoad();
+
+  /* 타이틀/소타이틀 hover 컨트롤 초기화 */
+  initTitCtrlHover();
 })();
 </script>
 </body>
