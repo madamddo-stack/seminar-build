@@ -2262,11 +2262,11 @@ function _isDarkHex(hex){
 
 /* 다크/라이트 모드에 따라 로고 전환 */
 function applyLogoMode(dark){
-  /* JK 로고: 다크 → bi_jk_white.svg, 라이트 → jk-logo.png */
+  /* JK 로고: 항상 jk-logo.png 고정, 다크 시 filter로 화이트화 */
   ['jk-img-top','jk-img-bottom'].forEach(function(id){
     var img = eid(id); if(!img) return;
-    var newSrc = dark ? 'img/bi_jk_white.svg' : 'img/jk-logo.png';
-    if(img.src.indexOf(newSrc) === -1) img.src = newSrc;
+    if(img.src.indexOf('jk-logo.png') === -1) img.src = 'img/jk-logo.png';
+    img.style.filter = dark ? 'brightness(0) invert(1)' : '';
     img.style.display = 'block';
     var ph = eid(id.replace('jk-img-','jk-ph-'));
     if(ph) ph.style.display = 'none';
