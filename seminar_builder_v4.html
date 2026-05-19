@@ -519,11 +519,15 @@ body.preview-mode #left-rail,
 body.preview-mode #side-panel,
 body.preview-mode #right-panel{ display:none!important; }
 
+/* Preview mode: 스크롤 허용 */
+body.preview-mode,
+body.preview-mode #app{ height:auto!important; overflow:visible!important; }
+
 body.preview-mode #main-area{
-  display:block!important; height:auto; overflow:visible; padding-top:52px;
+  display:block!important; height:auto!important; overflow:visible!important; padding-top:52px;
 }
 body.preview-mode #canvas-area{
-  display:block!important; height:auto; overflow:visible;
+  display:block!important; height:auto!important; overflow:visible!important;
   background:#F3F4F6; padding:40px 32px 80px; align-items:unset;
 }
 body.preview-mode #guide-page{
