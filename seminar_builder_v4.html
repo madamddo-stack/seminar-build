@@ -488,6 +488,71 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .ed-mode .partner-upload-area:hover .logo-change-btn{ display:flex; }
 
+/* ══════════════════════════════════════════
+   미리보기 모드
+══════════════════════════════════════════ */
+#preview-header{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:9000;
+  height:52px;background:#fff;border-bottom:1px solid #E5E7EB;
+  align-items:center;justify-content:space-between;padding:0 24px;
+  gap:12px;
+}
+body.preview-mode #preview-header{display:flex;}
+.ph-left{display:flex;align-items:center;gap:10px;}
+.ph-logo{width:28px;height:28px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;}
+.ph-logo img{height:14px;width:auto;}
+.ph-title{font-size:14px;font-weight:700;color:#111;}
+.ph-right{display:flex;align-items:center;gap:8px;}
+.ph-btn{
+  background:none;border:1px solid #E5E7EB;border-radius:8px;
+  padding:6px 14px;font-size:13px;font-weight:600;color:#374151;
+  cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.ph-btn:hover{background:#F9FAFB;border-color:#D1D5DB;}
+.ph-btn-dark{background:#131927;color:#fff;border-color:#131927;}
+.ph-btn-dark:hover{background:#212936;border-color:#212936;}
+
+/* Preview mode: 에디터 UI 숨기기 */
+body.preview-mode #topbar,
+body.preview-mode #left-rail,
+body.preview-mode #side-panel,
+body.preview-mode #right-panel{ display:none!important; }
+
+body.preview-mode #main-area{
+  display:block!important; height:auto; overflow:visible; padding-top:52px;
+}
+body.preview-mode #canvas-area{
+  display:block!important; height:auto; overflow:visible;
+  background:#F3F4F6; padding:40px 32px 80px; align-items:unset;
+}
+body.preview-mode #guide-page{
+  display:flex!important; justify-content:center;
+  margin-bottom:60px;
+}
+body.preview-mode #banner-page{
+  display:block!important; background:transparent;
+  max-width:1000px; margin:0 auto;
+}
+body.preview-mode #banner-page .bn-tit-ovr{ display:none!important; }
+body.preview-mode .add-row-area,
+body.preview-mode .row-ctrl,
+body.preview-mode .tit-ctrl,
+body.preview-mode .img-overlay,
+body.preview-mode .chk-add-area,
+body.preview-mode .chk-del-btn,
+body.preview-mode .ov-type-bar{ display:none!important; }
+body.preview-mode .ed{ outline:none!important; box-shadow:none!important; }
+body.preview-mode #edit-hint{ display:none!important; }
+
+/* Preview 배너 섹션 헤더 */
+#preview-bn-heading{
+  display:none; font-size:13px; font-weight:700; color:#6B7280;
+  letter-spacing:.06em; text-transform:uppercase;
+  max-width:1000px; margin:0 auto 20px; padding:0;
+}
+body.preview-mode #preview-bn-heading{ display:block; }
+
 /* ─── 파트너 로고 픽커 팝업 ─────────────── */
 #partner-picker{
   display:none;position:fixed;z-index:9500;
@@ -1887,6 +1952,20 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 
 </div><!-- /main-area -->
 </div><!-- /app -->
+
+<!-- 미리보기 헤더 -->
+<div id="preview-header">
+  <div class="ph-left">
+    <div class="ph-logo"><img src="img/bi_jk.svg" alt="잡코리아"></div>
+    <span class="ph-title">세미나 미리보기</span>
+  </div>
+  <div class="ph-right">
+    <button class="ph-btn" onclick="copyPreviewUrl()"><span class="mi mi-xs">link</span> URL 복사</button>
+    <a id="preview-edit-link" class="ph-btn ph-btn-dark" href="#" target="_blank"><span class="mi mi-xs">edit</span> 편집하기</a>
+  </div>
+</div>
+<!-- 배너 섹션 레이블 -->
+<div id="preview-bn-heading">배너 4종</div>
 
 <!-- 파트너 로고 픽커 팝업 -->
 <div id="partner-picker">
@@ -3402,92 +3481,126 @@ function savePng(){
 function dlGuidePng(){ savePng(); }
 
 /* ══════════════════════════════════════════
-   미리보기 새 창 열기
+   미리보기 URL 공유
 ══════════════════════════════════════════ */
-function openPreview(){
-  showToast('미리보기 생성 중...');
+function collectPreviewState(){
   var root = eid('guide-root');
-
-  /* 1. 안내문 캡처 */
-  root.classList.remove('ed-mode');
-  eid('edit-hint').style.display = 'none';
-
-  html2canvas(root, {
-    scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false,
-    onclone:function(doc){
-      var r = doc.getElementById('guide-root');
-      if(r) r.classList.remove('ed-mode');
-      var addArea = doc.querySelector('.add-row-area');
-      if(addArea) addArea.style.display='none';
-      doc.querySelectorAll('.det-row-wrap[data-hidden="1"]').forEach(function(row){ row.style.display='none'; });
-    }
-  }).then(function(guideCanvas){
-    root.classList.add('ed-mode');
-    eid('edit-hint').style.display='';
-    var guideUrl = guideCanvas.toDataURL('image/png');
-
-    /* 2. 배너 4종 순차 캡처 */
-    var types = ['v200','v170','strip','news'];
-    var bannerUrls = {};
-    var bannerLabels = {
-      v200:'기업라운지좌측 200×275',
-      v170:'기업검색좌측 170×235',
-      strip:'기업라운지띠 940×80',
-      news:'뉴스레터 535×274'
-    };
-    function captureBanners(i){
-      if(i >= types.length){ buildPreviewWindow(guideUrl, bannerUrls, bannerLabels); return; }
-      var t = types[i];
-      toBlob(t).then(function(canvas){
-        bannerUrls[t] = canvas.toDataURL('image/png');
-        captureBanners(i+1);
-      }).catch(function(){ captureBanners(i+1); });
-    }
-    captureBanners(0);
-
-  }).catch(function(e){
-    root.classList.add('ed-mode');
-    eid('edit-hint').style.display='';
-    showToast('❌ 미리보기 생성 실패: '+e.message, true);
+  var s = {
+    _v:3,
+    bg:     root ? root.style.background : '#cfd4e2',
+    titClr: (eid('ed-title')||{style:{}}).style.color || '#2662e2',
+    attClr: (eid('ed-att')  ||{style:{}}).style.color || '#243254',
+    subClr: (eid('ed-sub')  ||{style:{}}).style.color || '#1d2b4d',
+    chkClr: (eid('sw-chk')  ||{style:{}}).style.background || '#1344a0',
+    titSwapped: _titSwapped,
+    ovType: _ovType,
+    projectName: (eid('project-name')||{}).value || '',
+    partnerSrc: '',
+    html:{}, bnf:{}
+  };
+  /* 편집 요소 innerHTML */
+  ['ed-att','ed-title','ed-sub','ed-ctit','ed-dtit'].forEach(function(id){
+    var el=eid(id); s.html[id]=el?el.innerHTML:'';
   });
+  /* 상세 행 */
+  var dr=eid('det-rows'); if(dr) s.detHtml=dr.innerHTML;
+  /* 개요 */
+  var ol=eid('ov-list');   if(ol) s.ovListHtml=ol.innerHTML;
+  var op=eid('ov-prose');  if(op) s.ovProseHtml=op.innerHTML;
+  /* 파트너 로고 (프리셋 경로만) */
+  var pi=eid('partner-img-top');
+  if(pi && pi.style.display!=='none'){
+    var src=pi.getAttribute('src')||'';
+    if(src&&!src.startsWith('data:')) s.partnerSrc=src;
+  }
+  /* 배너 필드 */
+  ['bn-att','bn-title','bn-hash1','bn-hash2','bn-btntxt',
+   'bn-att-size','bn-tit-size','bn-btnbg','bn-btnbg-hex','bn-btntc','bn-btntc-hex'].forEach(function(id){
+    var el=eid(id); if(el) s.bnf[id]=el.value;
+  });
+  ['v200','v170','strip','news'].forEach(function(t){
+    ['att','tit','lines'].forEach(function(f){
+      var el=eid('ovr-'+t+'-'+f); if(el&&el.value) s.bnf['ovr-'+t+'-'+f]=el.value;
+    });
+    var tv=eid('tov-'+t); if(tv&&tv.value) s.bnf['tov-'+t]=tv.value;
+  });
+  return s;
 }
 
-function buildPreviewWindow(guideUrl, bannerUrls, bannerLabels){
-  var win = window.open('', '_blank');
-  if(!win){ showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', true); return; }
-  var bannerHtml = Object.keys(bannerUrls).map(function(t){
-    return '<div class="bw">'+
-      '<div class="bl">'+bannerLabels[t]+'</div>'+
-      '<img src="'+bannerUrls[t]+'" style="max-width:100%;display:block;">'+
-    '</div>';
-  }).join('');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">'+
-    '<title>미리보기 — 세미나 빌더</title>'+
-    '<style>'+
-      '*{box-sizing:border-box;margin:0;padding:0;}'+
-      'body{background:#F3F4F6;font-family:-apple-system,sans-serif;padding:40px 0 80px;}'+
-      '.wrap{max-width:960px;margin:0 auto;padding:0 24px;}'+
-      'h2{font-size:13px;font-weight:600;color:#6B7280;letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px;}'+
-      '.section{margin-bottom:56px;}'+
-      '.guide-img{display:block;max-width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12);}'+
-      '.banner-grid{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;}'+
-      '.bw{background:#fff;border-radius:10px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);}'+
-      '.bl{font-size:11px;font-weight:600;color:#9CA3AF;margin-bottom:10px;letter-spacing:.04em;}'+
-    '</style>'+
-    '</head><body>'+
-    '<div class="wrap">'+
-      '<div class="section">'+
-        '<h2>안내문</h2>'+
-        '<img class="guide-img" src="'+guideUrl+'">'+
-      '</div>'+
-      '<div class="section">'+
-        '<h2>배너 4종</h2>'+
-        '<div class="banner-grid">'+bannerHtml+'</div>'+
-      '</div>'+
-    '</div>'+
-    '</body></html>');
-  win.document.close();
+function generatePreviewUrl(){
+  try{
+    var state = collectPreviewState();
+    var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    return window.location.origin+window.location.pathname+'?mode=preview#'+encoded;
+  }catch(e){ return window.location.href; }
 }
+
+function copyPreviewUrl(){
+  var url = generatePreviewUrl();
+  navigator.clipboard && navigator.clipboard.writeText(url)
+    .then(function(){ showToast('URL이 복사되었습니다'); })
+    .catch(function(){ showToast('복사 실패', true); });
+}
+
+function openPreview(){
+  var url = generatePreviewUrl();
+  navigator.clipboard && navigator.clipboard.writeText(url).catch(function(){});
+  window.open(url, '_blank');
+  showToast('미리보기 URL이 복사되었습니다');
+}
+
+function applyPreviewState(s){
+  if(!s) return;
+  if(s.bg)     applyBg(s.bg);
+  if(s.titClr) applyTitleC(s.titClr);
+  if(s.attClr) applyMain(s.attClr);
+  if(s.subClr) applySubC(s.subClr);
+  if(s.chkClr) applyChkC(s.chkClr);
+  if(s.projectName){ var pn=eid('project-name'); if(pn) pn.value=s.projectName; }
+  if(s.titSwapped!==undefined) applyTitSwap(!!s.titSwapped);
+  /* HTML 복원 */
+  if(s.html) ['ed-att','ed-title','ed-sub','ed-ctit','ed-dtit'].forEach(function(id){
+    var el=eid(id); if(el&&s.html[id]!==undefined) el.innerHTML=s.html[id];
+  });
+  /* 상세 행 복원 */
+  if(s.detHtml){ var dr=eid('det-rows'); if(dr){ dr.innerHTML=s.detHtml; dr.querySelectorAll('.ed').forEach(bindEdEl); } }
+  /* 개요 복원 */
+  if(s.ovListHtml){ var ol=eid('ov-list'); if(ol){ ol.innerHTML=s.ovListHtml; ol.querySelectorAll('.ed').forEach(bindEdEl); } }
+  if(s.ovProseHtml){ var op=eid('ov-prose'); if(op){ op.innerHTML=s.ovProseHtml; op.querySelectorAll('.ed').forEach(bindEdEl); } }
+  if(s.ovType) setOvType(s.ovType);
+  /* 파트너 로고 */
+  if(s.partnerSrc) selectPartnerPreset(s.partnerSrc);
+  /* 배너 필드 */
+  if(s.bnf) Object.keys(s.bnf).forEach(function(id){ var el=eid(id); if(el&&el.tagName) el.value=s.bnf[id]; });
+}
+
+function showPreviewLayout(){
+  document.body.classList.add('preview-mode');
+  var root=eid('guide-root'); if(root) root.classList.remove('ed-mode');
+  /* 편집 링크 설정 */
+  var el=eid('preview-edit-link'); if(el) el.href=window.location.origin+window.location.pathname;
+  /* 배너 4종 모두 렌더 */
+  var d=getBnData();
+  ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
+  /* banner-page에 inline display:none 제거 */
+  var bp=eid('banner-page'); if(bp) bp.style.display='block';
+  /* 배너 섹션 레이블 위치 — banner-page 앞에 삽입 */
+  var bnh=eid('preview-bn-heading');
+  if(bnh&&bp&&bp.parentNode) bp.parentNode.insertBefore(bnh,bp);
+}
+
+function initPreviewMode(){
+  if(window.location.search.indexOf('mode=preview')===-1) return false;
+  var hash=window.location.hash.slice(1);
+  if(!hash) return false;
+  try{
+    var s=JSON.parse(decodeURIComponent(escape(atob(hash))));
+    applyPreviewState(s);
+    showPreviewLayout();
+    return true;
+  }catch(e){ console.error('Preview decode error:',e); return false; }
+}
+
 
 /* ══════════════════════════════════════════
    토스트 / 유틸
@@ -3740,6 +3853,8 @@ function clearHistory(){
   /* 히스토리 탭 방문 시 draft 배너 체크 */
   checkDraftOnLoad();
 
+  /* 미리보기 모드 체크 — URL에 ?mode=preview 있으면 미리보기 레이아웃으로 전환 */
+  initPreviewMode();
 
 })();
 </script>
