@@ -487,6 +487,31 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .ed-mode .partner-upload-area:hover .logo-change-btn{ display:flex; }
 
+/* ─── 파트너 로고 픽커 팝업 ─────────────── */
+#partner-picker{
+  display:none;position:fixed;z-index:9500;
+  background:#fff;border:1px solid #E5E7EB;border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.13);
+  padding:8px;width:220px;
+}
+#partner-picker.open{display:block;}
+.pp-title{font-size:11px;font-weight:600;color:#9CA3AF;letter-spacing:.04em;padding:4px 8px 8px;border-bottom:1px solid #F3F4F6;margin-bottom:6px;}
+.pp-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:7px;cursor:pointer;
+  transition:background .12s;
+}
+.pp-item:hover{background:#F9FAFB;}
+.pp-item img{height:22px;object-fit:contain;flex-shrink:0;}
+.pp-item-name{font-size:12px;color:#374151;font-weight:500;flex:1;}
+.pp-divider{height:1px;background:#F3F4F6;margin:6px 0;}
+.pp-upload{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;border-radius:7px;cursor:pointer;
+  transition:background .12s;font-size:12px;color:#6B7280;
+}
+.pp-upload:hover{background:#F9FAFB;color:#374151;}
+
 /* ─── 팔레트 바 ──────────────────────────── */
 .palette-bar{
   position:fixed;top:56px;left:0;right:0;z-index:8990;
@@ -1415,7 +1440,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
         <img src="img/collab-x.png" alt="×">
       </span>
       <!-- 주관사 로고 -->
-      <div class="partner-upload-area" onclick="triggerPartnerUpload()" title="주관사 로고 PNG 등록">
+      <div class="partner-upload-area" onclick="openPartnerPicker(event)" title="주관사 로고 선택">
         <img class="partner-img" id="partner-img-top" alt="주관사 로고">
         <span class="partner-ph" id="partner-ph-top">주관사 로고 PNG</span>
         <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
@@ -1571,7 +1596,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
           <img src="img/collab-x.png" alt="×">
         </span>
         <!-- 주관사 로고 -->
-        <div class="partner-upload-area" onclick="triggerPartnerUpload()" title="주관사 로고 PNG 등록">
+        <div class="partner-upload-area" onclick="openPartnerPicker(event)" title="주관사 로고 선택">
           <img class="partner-img bottom-img" id="partner-img-bottom" alt="주관사 로고">
           <span class="partner-ph" id="partner-ph-bottom">주관사 로고 PNG</span>
           <span class="logo-change-btn"><span class="mi mi-xs">autorenew</span> 변경</span>
@@ -1854,6 +1879,23 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 
 </div><!-- /main-area -->
 </div><!-- /app -->
+
+<!-- 파트너 로고 픽커 팝업 -->
+<div id="partner-picker">
+  <div class="pp-title">주관사 로고 선택</div>
+  <div class="pp-item" onclick="selectPartnerPreset('img/logo_ainspartner.png')">
+    <img src="img/logo_ainspartner.png" alt="아인스파트너">
+    <span class="pp-item-name">아인스파트너</span>
+  </div>
+  <div class="pp-item" onclick="selectPartnerPreset('img/logo_ehredu.png')">
+    <img src="img/logo_ehredu.png" alt="중앙경제HR교육원">
+    <span class="pp-item-name">중앙경제HR교육원</span>
+  </div>
+  <div class="pp-divider"></div>
+  <div class="pp-upload" onclick="eid('partner-input').click();closePartnerPicker();">
+    <span class="mi mi-sm">upload</span> 직접 업로드
+  </div>
+</div>
 
 <!-- 인라인 서식 툴바 -->
 <div id="fmt-bar">
@@ -2852,6 +2894,38 @@ function loadPartnerLogo(input){
     });
   };
   reader.readAsDataURL(file);
+}
+
+/* ── 파트너 로고 픽커 ── */
+function openPartnerPicker(e){
+  e.stopPropagation();
+  var picker = eid('partner-picker');
+  if(!picker) return;
+  var rect = e.currentTarget.getBoundingClientRect();
+  picker.style.top  = (rect.bottom + 6) + 'px';
+  picker.style.left = rect.left + 'px';
+  picker.classList.add('open');
+  /* 외부 클릭 시 닫기 */
+  setTimeout(function(){
+    document.addEventListener('click', closePartnerPicker, { once:true });
+  }, 0);
+}
+function closePartnerPicker(){
+  var picker = eid('partner-picker');
+  if(picker) picker.classList.remove('open');
+}
+function selectPartnerPreset(src){
+  closePartnerPicker();
+  ['partner-img-top','partner-img-bottom'].forEach(function(id){
+    var img = eid(id);
+    if(!img) return;
+    img.src = src;
+    img.style.display = 'block';
+  });
+  ['partner-ph-top','partner-ph-bottom'].forEach(function(id){
+    var ph = eid(id);
+    if(ph) ph.style.display = 'none';
+  });
 }
 
 /* ══════════════════════════════════════════
