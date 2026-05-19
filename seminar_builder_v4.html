@@ -3694,13 +3694,11 @@ function showAutoSaveIndicator(){
 function restoreDraft(){
   var draft = loadDraft();
   if(!draft){ showToast('복원할 작업이 없습니다', true); return; }
-  if(draft.bg) applyBg(draft.bg);
-  if(draft.titClr) applyTitleC(draft.titClr);
-  if(draft.attClr) applyMain(draft.attClr);
-  applyTitSwap(!!draft.titSwapped);
+  applyPreviewState(draft);
+  /* 배너 필드 (fields 키로 저장된 것) */
   Object.keys(draft.fields||{}).forEach(function(fid){
     var el = eid(fid);
-    if(el && el.tagName) el.value = draft.fields[fid];
+    if(el && el.tagName && typeof el.value !== 'undefined') el.value = draft.fields[fid];
   });
   rb();
   switchPage('guide', eid('rail-guide'));
@@ -3758,6 +3756,24 @@ function collectHistState(){
   ['sw-bg','sw-main','sw-title','sw-sub','sw-chk'].forEach(function(id){
     var el = eid(id); if(el) state.fields[id+'_bg'] = el.style.background;
   });
+  /* 안내문 HTML 스냅샷 (텍스트 편집 내용 보존) */
+  state.html = {};
+  ['ed-att','ed-title','ed-sub','ed-ctit','ed-dtit'].forEach(function(id){
+    var el = eid(id); state.html[id] = el ? el.innerHTML : '';
+  });
+  var dr = eid('det-rows'); if(dr) state.detHtml = dr.innerHTML;
+  var ol = eid('ov-list');  if(ol) state.ovListHtml = ol.innerHTML;
+  var op = eid('ov-prose'); if(op) state.ovProseHtml = op.innerHTML;
+  /* 개요 타입 */
+  state.ovType = (function(){
+    var bar = eid('ov-type-bar'); if(!bar) return 'list';
+    var active = bar.querySelector('.ov-tab.active'); return active ? active.dataset.type : 'list';
+  })();
+  /* 파트너 로고 */
+  var pimg = eid('partner-img-top'); state.partnerSrc = (pimg && pimg.style.display!=='none') ? pimg.src : '';
+  /* subClr / chkClr */
+  state.subClr = (eid('ed-sub') && eid('ed-sub').style.color) || '';
+  state.chkClr = (eid('sw-chk') && eid('sw-chk').style.background) || '';
   return state;
 }
 
@@ -3812,17 +3828,11 @@ function restoreHistory(id){
   for(var i=0;i<list.length;i++){ if(list[i].id===id){ state=list[i]; break; } }
   if(!state){ showToast('항목을 찾을 수 없습니다', true); return; }
 
-  /* 안내문 색상 복원 */
-  if(state.bg) applyBg(state.bg);
-  if(state.titClr) applyTitleC(state.titClr);
-  if(state.attClr) applyMain(state.attClr);
-  /* 타이틀 순서 복원 */
-  applyTitSwap(!!state.titSwapped);
-
-  /* 배너 필드 복원 */
+  applyPreviewState(state);
+  /* 배너 필드 (fields 키로 저장된 것) */
   Object.keys(state.fields||{}).forEach(function(fid){
     var el = eid(fid);
-    if(el && el.tagName) el.value = state.fields[fid];
+    if(el && el.tagName && typeof el.value !== 'undefined') el.value = state.fields[fid];
   });
 
   rb();
