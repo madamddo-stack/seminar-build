@@ -636,52 +636,50 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 /* ─── 팔레트 바 ──────────────────────────── */
 .palette-bar{
   position:fixed;top:56px;left:0;right:0;z-index:8990;
-  height:44px;
-  background:rgba(14,14,14,0.97);
-  border-bottom:1px solid #1a1a1a;
+  height:40px;
+  background:#fff;
+  border-bottom:1px solid #E5E7EB;
   display:flex;align-items:center;
   padding:0 16px;
-  gap:4px;
+  gap:6px;
   overflow-x:auto;
   scrollbar-width:none;
 }
 .palette-bar::-webkit-scrollbar{display:none;}
 .pal-label{
-  font-size:9px;color:#444;font-weight:700;
-  letter-spacing:.06em;white-space:nowrap;
-  margin-right:8px;flex-shrink:0;
+  font-size:10px;color:#9EA2AE;font-weight:600;
+  letter-spacing:.05em;white-space:nowrap;
+  margin-right:4px;flex-shrink:0;
 }
+/* pill 형태 팔레트 스와치 */
 .pal-sw{
-  width:40px;height:28px;
-  border-radius:6px;
-  position:relative;
-  cursor:pointer;
-  border:2px solid transparent;
-  transition:border-color .15s,transform .12s;
-  flex-shrink:0;
+  display:flex;
+  width:72px;height:26px;
+  border-radius:100px;
   overflow:hidden;
+  cursor:pointer;
+  border:1.5px solid #D1D5DB;
+  transition:border-color .15s, box-shadow .15s;
+  flex-shrink:0;
+  position:relative;
 }
-.pal-sw:hover{transform:scale(1.12);border-color:#555;}
-.pal-sw.active{border-color:#fff !important;}
-/* 하단 듀얼 컬러 바 (좌: 타이틀색 / 우: 버튼색) */
-.pal-accent-row{
-  position:absolute;bottom:0;left:0;right:0;
-  height:8px;display:flex;
-}
-.pal-accent{flex:1;}
-.pal-btn-dot{flex:1;}
+.pal-sw:hover{ border-color:#9CA3AF; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+.pal-sw.active{ border-color:#374151 !important; box-shadow:0 0 0 1.5px #374151; }
+/* 3분할 컬러 세그먼트 */
+.pal-seg{ flex:1; }
 /* 팔레트명 툴팁 */
 .pal-sw::after{
   content:attr(data-name);
   position:absolute;
   bottom:calc(100% + 6px);left:50%;
   transform:translateX(-50%);
-  background:#1a1a1a;color:#ccc;
-  font-size:9px;font-weight:600;
-  padding:3px 8px;border-radius:5px;
+  background:#1F2937;color:#F9FAFB;
+  font-size:10px;font-weight:600;
+  padding:3px 8px;border-radius:6px;
   white-space:nowrap;pointer-events:none;
   opacity:0;transition:opacity .15s;
   font-family:inherit;
+  z-index:10;
 }
 .pal-sw:hover::after{opacity:1;}
 
@@ -2122,12 +2120,21 @@ var _activePalIdx = 0;
 /* 팔레트 바 스와치 렌더 */
 function renderPaletteBar(){
   var bar = eid('palette-bar');
+  /* 레이블 */
+  var lbl = document.createElement('span');
+  lbl.className = 'pal-label';
+  lbl.textContent = 'THEME';
+  bar.appendChild(lbl);
+
   PALETTES.forEach(function(p, i){
     var sw = document.createElement('div');
     sw.className = 'pal-sw' + (i === 0 ? ' active' : '');
     sw.setAttribute('data-name', p.name);
-    sw.style.background = p.bg;
-    sw.innerHTML = '<div class="pal-accent-row"><div class="pal-accent" style="background:'+p.title+';"></div><div class="pal-btn-dot" style="background:'+(p.btn||p.live)+';"></div></div>';
+    /* 3분할: bg / title / main(텍스트) */
+    sw.innerHTML =
+      '<div class="pal-seg" style="background:'+p.bg+'"></div>'+
+      '<div class="pal-seg" style="background:'+(p.btn||p.live)+'"></div>'+
+      '<div class="pal-seg" style="background:'+p.main+'"></div>';
     sw.addEventListener('click', function(){ applyPalette(i); });
     bar.appendChild(sw);
   });
