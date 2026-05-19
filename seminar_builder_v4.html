@@ -463,12 +463,12 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .partner-img{
   display:none;
-  height:22px;
+  max-height:20px;
   width:auto;
   object-fit:contain;
   pointer-events:none;
 }
-.partner-img.bottom-img{ height:28px;width:auto; }
+.partner-img.bottom-img{ max-height:20px;width:auto; }
 .partner-ph{
   font-size:10px;color:rgba(0,0,0,0.28);
   border:1px dashed rgba(0,0,0,0.2);
@@ -493,23 +493,30 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   display:none;position:fixed;z-index:9500;
   background:#fff;border:1px solid #E5E7EB;border-radius:10px;
   box-shadow:0 8px 24px rgba(0,0,0,.13);
-  padding:8px;width:220px;
+  padding:12px;width:300px;
 }
 #partner-picker.open{display:block;}
-.pp-title{font-size:11px;font-weight:600;color:#9CA3AF;letter-spacing:.04em;padding:4px 8px 8px;border-bottom:1px solid #F3F4F6;margin-bottom:6px;}
+.pp-title{font-size:11px;font-weight:600;color:#9CA3AF;letter-spacing:.04em;padding-bottom:10px;border-bottom:1px solid #F3F4F6;margin-bottom:10px;}
+.pp-list{display:flex;flex-direction:column;gap:8px;}
 .pp-item{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 10px;border-radius:7px;cursor:pointer;
-  transition:background .12s;
+  display:flex;flex-direction:column;gap:4px;
+  cursor:pointer;
 }
-.pp-item:hover{background:#F9FAFB;}
-.pp-item img{height:22px;width:auto;object-fit:contain;flex-shrink:0;}
-.pp-item-name{font-size:12px;color:#374151;font-weight:500;flex:1;}
-.pp-divider{height:1px;background:#F3F4F6;margin:6px 0;}
+.pp-item:hover .pp-logo-box{border-color:#4285f4;}
+.pp-item-name{font-size:11px;color:#9CA3AF;font-weight:500;padding-left:2px;}
+.pp-logo-box{
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid #E5E7EB;border-radius:6px;
+  padding:14px 20px;background:#fff;
+  transition:border-color .15s;
+}
+.pp-logo-box img{height:28px;width:auto;object-fit:contain;}
+.pp-divider{height:1px;background:#F3F4F6;margin:8px 0;}
 .pp-upload{
   display:flex;align-items:center;gap:8px;
   padding:8px 10px;border-radius:7px;cursor:pointer;
   transition:background .12s;font-size:12px;color:#6B7280;
+  font-family:inherit;
 }
 .pp-upload:hover{background:#F9FAFB;color:#374151;}
 
@@ -1884,13 +1891,19 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 <!-- 파트너 로고 픽커 팝업 -->
 <div id="partner-picker">
   <div class="pp-title">주관사 로고 선택</div>
-  <div class="pp-item" onclick="selectPartnerPreset('img/logo_ainspartner.png')">
-    <img src="img/logo_ainspartner.png" alt="아인스파트너">
-    <span class="pp-item-name">아인스파트너</span>
-  </div>
-  <div class="pp-item" onclick="selectPartnerPreset('img/logo_ehredu.png')">
-    <img src="img/logo_ehredu.png" alt="중앙경제HR교육원">
-    <span class="pp-item-name">중앙경제HR교육원</span>
+  <div class="pp-list">
+    <div class="pp-item" onclick="selectPartnerPreset('img/logo_ehredu.png')">
+      <span class="pp-item-name">중앙경제HR교육원</span>
+      <div class="pp-logo-box">
+        <img src="img/logo_ehredu.png" alt="중앙경제HR교육원">
+      </div>
+    </div>
+    <div class="pp-item" onclick="selectPartnerPreset('img/logo_ainspartner.png')">
+      <span class="pp-item-name">아인스 파트너</span>
+      <div class="pp-logo-box">
+        <img src="img/logo_ainspartner.png" alt="아인스파트너">
+      </div>
+    </div>
   </div>
   <div class="pp-divider"></div>
   <div class="pp-upload" onclick="eid('partner-input').click();closePartnerPicker();">
