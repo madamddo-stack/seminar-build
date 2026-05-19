@@ -1237,7 +1237,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   </div>
   <div class="tb-right">
     <button class="tb-btn-ghost-v4" onclick="saveHistory()">완료 저장</button>
-    <button class="tb-btn-ghost-v4" onclick="copyShareUrl()">URL 저장</button>
+    <button class="tb-btn-ghost-v4" onclick="openPreview()">미리보기</button>
     <div class="tb-btn-dl-wrap">
       <button class="tb-btn-dark-v4 main" onclick="handleMainDl()">다운로드</button>
       <button class="tb-btn-dark-v4 caret" onclick="toggleDlMenu()"><span class="mi mi-xs">expand_more</span></button>
@@ -3245,6 +3245,94 @@ function savePng(){
 }
 
 function dlGuidePng(){ savePng(); }
+
+/* ══════════════════════════════════════════
+   미리보기 새 창 열기
+══════════════════════════════════════════ */
+function openPreview(){
+  showToast('미리보기 생성 중...');
+  var root = eid('guide-root');
+
+  /* 1. 안내문 캡처 */
+  root.classList.remove('ed-mode');
+  eid('edit-hint').style.display = 'none';
+
+  html2canvas(root, {
+    scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false,
+    onclone:function(doc){
+      var r = doc.getElementById('guide-root');
+      if(r) r.classList.remove('ed-mode');
+      var addArea = doc.querySelector('.add-row-area');
+      if(addArea) addArea.style.display='none';
+      doc.querySelectorAll('.det-row-wrap[data-hidden="1"]').forEach(function(row){ row.style.display='none'; });
+    }
+  }).then(function(guideCanvas){
+    root.classList.add('ed-mode');
+    eid('edit-hint').style.display='';
+    var guideUrl = guideCanvas.toDataURL('image/png');
+
+    /* 2. 배너 4종 순차 캡처 */
+    var types = ['v200','v170','strip','news'];
+    var bannerUrls = {};
+    var bannerLabels = {
+      v200:'기업라운지좌측 200×275',
+      v170:'기업검색좌측 170×235',
+      strip:'기업라운지띠 940×80',
+      news:'뉴스레터 535×274'
+    };
+    function captureBanners(i){
+      if(i >= types.length){ buildPreviewWindow(guideUrl, bannerUrls, bannerLabels); return; }
+      var t = types[i];
+      toBlob(t).then(function(canvas){
+        bannerUrls[t] = canvas.toDataURL('image/png');
+        captureBanners(i+1);
+      }).catch(function(){ captureBanners(i+1); });
+    }
+    captureBanners(0);
+
+  }).catch(function(e){
+    root.classList.add('ed-mode');
+    eid('edit-hint').style.display='';
+    showToast('❌ 미리보기 생성 실패: '+e.message, true);
+  });
+}
+
+function buildPreviewWindow(guideUrl, bannerUrls, bannerLabels){
+  var win = window.open('', '_blank');
+  if(!win){ showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', true); return; }
+  var bannerHtml = Object.keys(bannerUrls).map(function(t){
+    return '<div class="bw">'+
+      '<div class="bl">'+bannerLabels[t]+'</div>'+
+      '<img src="'+bannerUrls[t]+'" style="max-width:100%;display:block;">'+
+    '</div>';
+  }).join('');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8">'+
+    '<title>미리보기 — 세미나 빌더</title>'+
+    '<style>'+
+      '*{box-sizing:border-box;margin:0;padding:0;}'+
+      'body{background:#F3F4F6;font-family:-apple-system,sans-serif;padding:40px 0 80px;}'+
+      '.wrap{max-width:960px;margin:0 auto;padding:0 24px;}'+
+      'h2{font-size:13px;font-weight:600;color:#6B7280;letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px;}'+
+      '.section{margin-bottom:56px;}'+
+      '.guide-img{display:block;max-width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12);}'+
+      '.banner-grid{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;}'+
+      '.bw{background:#fff;border-radius:10px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);}'+
+      '.bl{font-size:11px;font-weight:600;color:#9CA3AF;margin-bottom:10px;letter-spacing:.04em;}'+
+    '</style>'+
+    '</head><body>'+
+    '<div class="wrap">'+
+      '<div class="section">'+
+        '<h2>안내문</h2>'+
+        '<img class="guide-img" src="'+guideUrl+'">'+
+      '</div>'+
+      '<div class="section">'+
+        '<h2>배너 4종</h2>'+
+        '<div class="banner-grid">'+bannerHtml+'</div>'+
+      '</div>'+
+    '</div>'+
+    '</body></html>');
+  win.document.close();
+}
 
 /* ══════════════════════════════════════════
    토스트 / 유틸
