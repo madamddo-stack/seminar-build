@@ -1792,12 +1792,20 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
       <span class="ins-val" id="ins-val-main">#243254</span>
     </div>
     <div class="ins-row">
-      <span class="ins-lbl">타이틀</span>
+      <span class="ins-lbl" id="ins-lbl-title">타이틀</span>
       <div class="ins-sw" id="ins-sw-title"><input type="color" oninput="applyTitleC(this.value);updateInspect()"></div>
       <span class="ins-val" id="ins-val-title">#2662e2</span>
     </div>
+    <div class="ins-row" style="justify-content:center;margin:2px 0;">
+      <button id="btn-swap-tit" onclick="swapTitles()" title="메인타이틀 ↕ 소타이틀 순서 변경"
+        style="display:flex;align-items:center;gap:4px;background:none;border:1px dashed #D1D5DB;border-radius:6px;padding:3px 10px;font-size:11px;color:#9CA3AF;cursor:pointer;font-family:inherit;transition:all .15s;"
+        onmouseover="this.style.borderColor='#4285f4';this.style.color='#4285f4';"
+        onmouseout="this.style.borderColor='#D1D5DB';this.style.color='#9CA3AF';">
+        <span class="mi mi-xs">swap_vert</span> 순서 변경
+      </button>
+    </div>
     <div class="ins-row">
-      <span class="ins-lbl">소타이틀</span>
+      <span class="ins-lbl" id="ins-lbl-sub">소타이틀</span>
       <div class="ins-sw" id="ins-sw-sub"><input type="color" oninput="applySubC(this.value);updateInspect()"></div>
       <span class="ins-val" id="ins-val-sub">#1d2b4d</span>
     </div>
@@ -2032,6 +2040,50 @@ function applyTitleC(v){
 function applySubC(v){
   eid('ed-sub').style.color = v;
   eid('sw-sub').style.background = v;
+}
+
+/* ── 메인타이틀 ↕ 소타이틀 순서 교환 ── */
+var _titSwapped = false;
+function swapTitles(){
+  var title = eid('ed-title');
+  var sub   = eid('ed-sub');
+  if(!title || !sub) return;
+  var parent = title.parentNode;
+  /* 현재 순서 파악 후 교환 */
+  if(title.compareDocumentPosition(sub) & Node.DOCUMENT_POSITION_FOLLOWING){
+    /* title이 앞 → sub을 title 앞으로 */
+    parent.insertBefore(sub, title);
+    _titSwapped = true;
+  } else {
+    /* sub이 앞 → title을 sub 앞으로 */
+    parent.insertBefore(title, sub);
+    _titSwapped = false;
+  }
+  /* Inspect 레이블 순서도 업데이트 */
+  _updateSwapLabels();
+  scheduleAutoSave();
+}
+function _updateSwapLabels(){
+  var lbl1 = eid('ins-lbl-title');
+  var lbl2 = eid('ins-lbl-sub');
+  if(!lbl1||!lbl2) return;
+  if(_titSwapped){
+    lbl1.textContent = '소타이틀';
+    lbl2.textContent = '타이틀';
+  } else {
+    lbl1.textContent = '타이틀';
+    lbl2.textContent = '소타이틀';
+  }
+}
+function applyTitSwap(swapped){
+  var title = eid('ed-title');
+  var sub   = eid('ed-sub');
+  if(!title||!sub) return;
+  var parent = title.parentNode;
+  var isSwapped = !(title.compareDocumentPosition(sub) & Node.DOCUMENT_POSITION_FOLLOWING);
+  if(swapped && !isSwapped){ parent.insertBefore(sub, title); _titSwapped = true; }
+  else if(!swapped && isSwapped){ parent.insertBefore(title, sub); _titSwapped = false; }
+  _updateSwapLabels();
 }
 /* applyAttC 역할은 applyMain 으로 통합됨 */
 function applyBtnC(v){
@@ -3258,6 +3310,7 @@ function restoreDraft(){
   if(draft.bg) applyBg(draft.bg);
   if(draft.titClr) applyTitleC(draft.titClr);
   if(draft.attClr) applyMain(draft.attClr);
+  applyTitSwap(!!draft.titSwapped);
   Object.keys(draft.fields||{}).forEach(function(fid){
     var el = eid(fid);
     if(el && el.tagName) el.value = draft.fields[fid];
@@ -3298,6 +3351,7 @@ function collectHistState(){
     projectName: (eid('project-name') || {}).value || '',
     guideTitle:  (eid('ed-title') || {}).innerText || '',
     guideSub:    (eid('ed-sub')   || {}).innerText || '',
+    titSwapped:  _titSwapped,
     fields: {}
   };
   /* 배너 필드 */
@@ -3375,6 +3429,8 @@ function restoreHistory(id){
   if(state.bg) applyBg(state.bg);
   if(state.titClr) applyTitleC(state.titClr);
   if(state.attClr) applyMain(state.attClr);
+  /* 타이틀 순서 복원 */
+  applyTitSwap(!!state.titSwapped);
 
   /* 배너 필드 복원 */
   Object.keys(state.fields||{}).forEach(function(fid){
