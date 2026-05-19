@@ -2170,12 +2170,6 @@ var _activePalIdx = 0;
 /* 팔레트 바 스와치 렌더 */
 function renderPaletteBar(){
   var bar = eid('palette-bar');
-  /* 레이블 */
-  var lbl = document.createElement('span');
-  lbl.className = 'pal-label';
-  lbl.textContent = 'THEME';
-  bar.appendChild(lbl);
-
   PALETTES.forEach(function(p, i){
     var sw = document.createElement('div');
     sw.className = 'pal-sw' + (i === 0 ? ' active' : '');
