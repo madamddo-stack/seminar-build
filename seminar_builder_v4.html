@@ -3176,6 +3176,13 @@ function bindEdEl(el){
   el.addEventListener('keydown', function(e){
     if(e.key !== 'Enter') return;
     e.preventDefault();
+
+    /* 불릿 구조 det-content: Enter → 새 ▪ 항목 추가 */
+    if(el.classList.contains('det-content') && el.querySelector('.bul')){
+      insertBulletOnEnter(el);
+      return;
+    }
+
     var sel = window.getSelection();
     if(!sel.rangeCount) return;
     var range = sel.getRangeAt(0);
@@ -3187,9 +3194,69 @@ function bindEdEl(el){
   });
   el.addEventListener('paste', function(e){
     e.preventDefault();
+    /* 불릿 구조: 여러 줄 붙여넣기 시 줄마다 새 불릿 항목 생성 */
+    if(el.classList.contains('det-content') && el.querySelector('.bul')){
+      var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+      if(lines.length > 1){
+        lines.forEach(function(line, i){
+          if(i === 0){ document.execCommand('insertText', false, line); }
+          else { insertBulletOnEnter(el); document.execCommand('insertText', false, line); }
+        });
+        return;
+      }
+    }
     var text = (e.clipboardData || window.clipboardData).getData('text/plain');
     document.execCommand('insertText', false, text);
   });
+}
+
+function insertBulletOnEnter(el){
+  var sel = window.getSelection();
+  if(!sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  range.deleteContents();
+
+  /* 현재 캐럿이 속한 <p> 탐색 */
+  var node = range.startContainer;
+  var p = node;
+  while(p && p.nodeName !== 'P' && p !== el){ p = p.parentNode; }
+  if(!p || p === el || p.nodeName !== 'P'){
+    /* <p> 밖이면 새 불릿 <p>를 마지막에 추가 */
+    p = null;
+  }
+
+  var bulTxt = p && p.querySelector('.bul-txt');
+
+  /* 캐럿 이후 남은 텍스트 추출 */
+  var afterFrag = null;
+  if(bulTxt){
+    var toEnd = range.cloneRange();
+    toEnd.selectNodeContents(bulTxt);
+    toEnd.setStart(range.endContainer, range.endOffset);
+    afterFrag = toEnd.extractContents();
+  }
+
+  /* 새 <p> 생성 */
+  var newP  = document.createElement('p');
+  var newBul = document.createElement('span');
+  newBul.className = 'bul';
+  newBul.textContent = '▪';
+  var newTxt = document.createElement('span');
+  newTxt.className = 'bul-txt';
+  if(afterFrag) newTxt.appendChild(afterFrag);
+  newP.appendChild(newBul);
+  newP.appendChild(newTxt);
+
+  if(p){ p.parentNode.insertBefore(newP, p.nextSibling); }
+  else  { el.appendChild(newP); }
+
+  /* 커서를 새 bul-txt 시작으로 */
+  var newRange = document.createRange();
+  newRange.setStart(newTxt, 0);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
 }
 
 /* 정적 .ed 요소에도 동일 바인딩 */
