@@ -2241,9 +2241,39 @@ function syncSwInput(id, val){
 /* ══════════════════════════════
    색상 적용 함수
 ══════════════════════════════ */
+/* 배경색 밝기 판별 (hex → luminance) */
+function _isDarkHex(hex){
+  if(!hex || hex[0]!=='#') return false;
+  var h = hex.length===4
+    ? '#'+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3]
+    : hex;
+  var r=parseInt(h.slice(1,3),16),
+      g=parseInt(h.slice(3,5),16),
+      b=parseInt(h.slice(5,7),16);
+  return (0.299*r + 0.587*g + 0.114*b) < 128;
+}
+
+/* 다크/라이트 모드에 따라 로고 전환 */
+function applyLogoMode(dark){
+  /* JK 로고: 다크 → bi_jk_white.svg, 라이트 → jk-logo.png */
+  ['jk-img-top','jk-img-bottom'].forEach(function(id){
+    var img = eid(id); if(!img) return;
+    var newSrc = dark ? 'img/bi_jk_white.svg' : 'img/jk-logo.png';
+    if(img.src.indexOf(newSrc) === -1) img.src = newSrc;
+    img.style.display = 'block';
+    var ph = eid(id.replace('jk-img-','jk-ph-'));
+    if(ph) ph.style.display = 'none';
+  });
+  /* 주관사 로고: 다크 → filter 반전, 라이트 → filter 제거 */
+  document.querySelectorAll('.partner-img').forEach(function(img){
+    img.style.filter = dark ? 'brightness(0) invert(1)' : '';
+  });
+}
+
 function applyBg(v){
   eid('guide-root').style.background = v;
   eid('sw-bg').style.background = v;
+  applyLogoMode(_isDarkHex(v));
 }
 function applyMain(v){
   /* 포인트 = 강조타이틀 (있을 수도, 없을 수도 있는 선택적 요소) */
@@ -3067,11 +3097,14 @@ function closePartnerPicker(){
 }
 function selectPartnerPreset(src){
   closePartnerPicker();
+  var bgHex = (eid('guide-root') && eid('guide-root').style.background) || '#ffffff';
+  var dark = _isDarkHex(bgHex);
   ['partner-img-top','partner-img-bottom'].forEach(function(id){
     var img = eid(id);
     if(!img) return;
     img.src = src;
     img.style.display = 'block';
+    img.style.filter = dark ? 'brightness(0) invert(1)' : '';
   });
   ['partner-ph-top','partner-ph-bottom'].forEach(function(id){
     var ph = eid(id);
