@@ -601,7 +601,7 @@ body.preview-mode #banner-page{
   display:block!important; background:transparent;
   max-width:1000px; margin:0 auto;
 }
-body.preview-mode #banner-page .bn-tit-ovr{ display:none!important; }
+/* bn-tit-ovr preview-mode 숨김은 .bn-detail-body 규칙으로 통합 */
 body.preview-mode .add-row-area,
 body.preview-mode .row-ctrl,
 body.preview-mode .tit-ctrl,
@@ -1366,9 +1366,26 @@ body.preview-mode .bn-img-ctrl{ display:none!important; }
 .bn-ovr-reset:hover{color:var(--text-pri);}
 .bn-ovr-label{font-size:8px;color:var(--text-muted);font-weight:700;letter-spacing:.05em;margin-bottom:2px;}
 
+/* ─── 배너 개별 설정 접기/펼치기 ─── */
+.bn-detail-toggle{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;border:none;border-top:1px solid var(--border);
+  background:transparent;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--text-muted);
+  transition:color .15s,background .15s;font-family:inherit;
+}
+.bn-detail-toggle:hover{color:var(--text-sec);background:var(--bg-app);}
+.bn-detail-toggle.open{color:var(--text-sec);}
+.bn-detail-toggle .dt-chev{transition:transform .2s;display:inline-flex;align-items:center;}
+.bn-detail-toggle.open .dt-chev{transform:rotate(180deg);}
+.bn-detail-body{display:none;}
+.bn-detail-body.open{display:block;}
+body.preview-mode .bn-detail-toggle{ display:none!important; }
+body.preview-mode .bn-detail-body{ display:none!important; }
+
 /* ─── 배너 하단 타이틀 개별 설정 ─── */
 .bn-tit-ovr{
-  margin-top:10px;
+  margin-top:0;
   background:#fff;border:1px solid var(--border);border-radius:8px;
   padding:10px 12px;display:flex;flex-direction:column;gap:6px;
 }
@@ -1834,53 +1851,58 @@ body.preview-mode .bn-img-ctrl{ display:none!important; }
         <div class="bn-stage-wrap" id="bn-wrap-v200">
           <div class="bn-stage" id="bn-stage-v200"></div>
         </div>
-        <div class="bn-tit-ovr">
-          <div class="bn-tit-ovr-head">
-            <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v200')"><span class="mi mi-xs">undo</span> 초기화</button>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">강조</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','att',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v200-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','att',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <textarea class="bn-tit-ovr-textarea" id="tov-v200"
-            placeholder="공통 타이틀 사용" rows="2"
-            oninput="rb()"></textarea>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">타이틀 크기</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','tit',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v200-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','tit',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">최대줄수</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','lines',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v200-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','lines',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">줄</span>
-          </div>
-        </div>
-        <div class="bn-img-ctrl" id="bn-img-ctrl-v200">
-          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
-          <div class="bn-img-ctrl-row">
-            <div class="bn-fit-row">
-              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v200-contain" onclick="setBnImgFit('v200','contain')">원본비율</button>
-              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v200-cover" onclick="setBnImgFit('v200','cover')">꽉채우기</button>
+        <button class="bn-detail-toggle" id="bn-dtog-v200" onclick="toggleBnDetail('v200')">
+          개별 설정 <span class="dt-chev mi mi-xs">expand_more</span>
+        </button>
+        <div class="bn-detail-body" id="bn-dbody-v200">
+          <div class="bn-tit-ovr">
+            <div class="bn-tit-ovr-head">
+              <span class="bn-tit-ovr-label">개별 설정</span>
+              <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v200')"><span class="mi mi-xs">undo</span> 초기화</button>
             </div>
-            <div class="bn-pos-grid" id="bn-pos-v200">
-              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v200','left top')"></button>
-              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v200','center top')"></button>
-              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v200','right top')"></button>
-              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v200','left center')"></button>
-              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v200','center center')"></button>
-              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v200','right center')"></button>
-              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v200','left bottom')"></button>
-              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v200','center bottom')"></button>
-              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v200','right bottom')"></button>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">강조</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','att',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v200-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','att',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <textarea class="bn-tit-ovr-textarea" id="tov-v200"
+              placeholder="공통 타이틀 사용" rows="2"
+              oninput="rb()"></textarea>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">타이틀 크기</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','tit',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v200-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','tit',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">최대줄수</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','lines',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v200-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v200','lines',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">줄</span>
+            </div>
+          </div>
+          <div class="bn-img-ctrl" id="bn-img-ctrl-v200">
+            <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+            <div class="bn-img-ctrl-row">
+              <div class="bn-fit-row">
+                <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v200-contain" onclick="setBnImgFit('v200','contain')">원본비율</button>
+                <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v200-cover" onclick="setBnImgFit('v200','cover')">꽉채우기</button>
+              </div>
+              <div class="bn-pos-grid" id="bn-pos-v200">
+                <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v200','left top')"></button>
+                <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v200','center top')"></button>
+                <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v200','right top')"></button>
+                <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v200','left center')"></button>
+                <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v200','center center')"></button>
+                <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v200','right center')"></button>
+                <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v200','left bottom')"></button>
+                <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v200','center bottom')"></button>
+                <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v200','right bottom')"></button>
+              </div>
             </div>
           </div>
         </div>
@@ -1899,53 +1921,58 @@ body.preview-mode .bn-img-ctrl{ display:none!important; }
         <div class="bn-stage-wrap" id="bn-wrap-v170">
           <div class="bn-stage" id="bn-stage-v170"></div>
         </div>
-        <div class="bn-tit-ovr">
-          <div class="bn-tit-ovr-head">
-            <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v170')"><span class="mi mi-xs">undo</span> 초기화</button>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">강조</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','att',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v170-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','att',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <textarea class="bn-tit-ovr-textarea" id="tov-v170"
-            placeholder="공통 타이틀 사용" rows="2"
-            oninput="rb()"></textarea>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">타이틀 크기</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','tit',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v170-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','tit',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">최대줄수</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','lines',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-v170-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','lines',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">줄</span>
-          </div>
-        </div>
-        <div class="bn-img-ctrl" id="bn-img-ctrl-v170">
-          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
-          <div class="bn-img-ctrl-row">
-            <div class="bn-fit-row">
-              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v170-contain" onclick="setBnImgFit('v170','contain')">원본비율</button>
-              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v170-cover" onclick="setBnImgFit('v170','cover')">꽉채우기</button>
+        <button class="bn-detail-toggle" id="bn-dtog-v170" onclick="toggleBnDetail('v170')">
+          개별 설정 <span class="dt-chev mi mi-xs">expand_more</span>
+        </button>
+        <div class="bn-detail-body" id="bn-dbody-v170">
+          <div class="bn-tit-ovr">
+            <div class="bn-tit-ovr-head">
+              <span class="bn-tit-ovr-label">개별 설정</span>
+              <button class="bn-tit-ovr-reset" onclick="resetTitOvr('v170')"><span class="mi mi-xs">undo</span> 초기화</button>
             </div>
-            <div class="bn-pos-grid" id="bn-pos-v170">
-              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v170','left top')"></button>
-              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v170','center top')"></button>
-              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v170','right top')"></button>
-              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v170','left center')"></button>
-              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v170','center center')"></button>
-              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v170','right center')"></button>
-              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v170','left bottom')"></button>
-              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v170','center bottom')"></button>
-              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v170','right bottom')"></button>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">강조</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','att',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v170-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','att',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <textarea class="bn-tit-ovr-textarea" id="tov-v170"
+              placeholder="공통 타이틀 사용" rows="2"
+              oninput="rb()"></textarea>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">타이틀 크기</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','tit',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v170-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','tit',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">최대줄수</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','lines',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-v170-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('v170','lines',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">줄</span>
+            </div>
+          </div>
+          <div class="bn-img-ctrl" id="bn-img-ctrl-v170">
+            <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+            <div class="bn-img-ctrl-row">
+              <div class="bn-fit-row">
+                <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v170-contain" onclick="setBnImgFit('v170','contain')">원본비율</button>
+                <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v170-cover" onclick="setBnImgFit('v170','cover')">꽉채우기</button>
+              </div>
+              <div class="bn-pos-grid" id="bn-pos-v170">
+                <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v170','left top')"></button>
+                <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v170','center top')"></button>
+                <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v170','right top')"></button>
+                <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v170','left center')"></button>
+                <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v170','center center')"></button>
+                <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v170','right center')"></button>
+                <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v170','left bottom')"></button>
+                <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v170','center bottom')"></button>
+                <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v170','right bottom')"></button>
+              </div>
             </div>
           </div>
         </div>
@@ -1964,46 +1991,51 @@ body.preview-mode .bn-img-ctrl{ display:none!important; }
         <div class="bn-stage-wrap" id="bn-wrap-strip">
           <div class="bn-stage" id="bn-stage-strip"></div>
         </div>
-        <div class="bn-tit-ovr">
-          <div class="bn-tit-ovr-head">
-            <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('strip')"><span class="mi mi-xs">undo</span> 초기화</button>
-          </div>
-          <textarea class="bn-tit-ovr-textarea" id="tov-strip"
-            placeholder="공통 타이틀 사용" rows="2"
-            oninput="rb()"></textarea>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">타이틀 크기</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','tit',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-strip-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','tit',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">최대줄수</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','lines',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-strip-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','lines',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">줄</span>
-          </div>
-        </div>
-        <div class="bn-img-ctrl" id="bn-img-ctrl-strip">
-          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
-          <div class="bn-img-ctrl-row">
-            <div class="bn-fit-row">
-              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-strip-contain" onclick="setBnImgFit('strip','contain')">원본비율</button>
-              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-strip-cover" onclick="setBnImgFit('strip','cover')">꽉채우기</button>
+        <button class="bn-detail-toggle" id="bn-dtog-strip" onclick="toggleBnDetail('strip')">
+          개별 설정 <span class="dt-chev mi mi-xs">expand_more</span>
+        </button>
+        <div class="bn-detail-body" id="bn-dbody-strip">
+          <div class="bn-tit-ovr">
+            <div class="bn-tit-ovr-head">
+              <span class="bn-tit-ovr-label">개별 설정</span>
+              <button class="bn-tit-ovr-reset" onclick="resetTitOvr('strip')"><span class="mi mi-xs">undo</span> 초기화</button>
             </div>
-            <div class="bn-pos-grid" id="bn-pos-strip">
-              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('strip','left top')"></button>
-              <button class="bn-pos-btn active" data-pos="center top" onclick="setBnImgPos('strip','center top')"></button>
-              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('strip','right top')"></button>
-              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('strip','left center')"></button>
-              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('strip','center center')"></button>
-              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('strip','right center')"></button>
-              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('strip','left bottom')"></button>
-              <button class="bn-pos-btn" data-pos="center bottom" onclick="setBnImgPos('strip','center bottom')"></button>
-              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('strip','right bottom')"></button>
+            <textarea class="bn-tit-ovr-textarea" id="tov-strip"
+              placeholder="공통 타이틀 사용" rows="2"
+              oninput="rb()"></textarea>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">타이틀 크기</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','tit',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-strip-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','tit',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">최대줄수</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','lines',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-strip-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','lines',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">줄</span>
+            </div>
+          </div>
+          <div class="bn-img-ctrl" id="bn-img-ctrl-strip">
+            <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+            <div class="bn-img-ctrl-row">
+              <div class="bn-fit-row">
+                <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-strip-contain" onclick="setBnImgFit('strip','contain')">원본비율</button>
+                <button class="bn-fit-btn" data-fit="cover" id="bn-fit-strip-cover" onclick="setBnImgFit('strip','cover')">꽉채우기</button>
+              </div>
+              <div class="bn-pos-grid" id="bn-pos-strip">
+                <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('strip','left top')"></button>
+                <button class="bn-pos-btn active" data-pos="center top" onclick="setBnImgPos('strip','center top')"></button>
+                <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('strip','right top')"></button>
+                <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('strip','left center')"></button>
+                <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('strip','center center')"></button>
+                <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('strip','right center')"></button>
+                <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('strip','left bottom')"></button>
+                <button class="bn-pos-btn" data-pos="center bottom" onclick="setBnImgPos('strip','center bottom')"></button>
+                <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('strip','right bottom')"></button>
+              </div>
             </div>
           </div>
         </div>
@@ -2022,53 +2054,58 @@ body.preview-mode .bn-img-ctrl{ display:none!important; }
         <div class="bn-stage-wrap" id="bn-wrap-news">
           <div class="bn-stage" id="bn-stage-news"></div>
         </div>
-        <div class="bn-tit-ovr">
-          <div class="bn-tit-ovr-head">
-            <span class="bn-tit-ovr-label">개별 설정</span>
-            <button class="bn-tit-ovr-reset" onclick="resetTitOvr('news')"><span class="mi mi-xs">undo</span> 초기화</button>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">강조</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','att',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-news-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','att',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <textarea class="bn-tit-ovr-textarea" id="tov-news"
-            placeholder="공통 타이틀 사용" rows="2"
-            oninput="rb()"></textarea>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">타이틀 크기</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','tit',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-news-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','tit',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">px</span>
-          </div>
-          <div class="bn-tit-ovr-row">
-            <span class="bn-tit-ovr-lbl">최대줄수</span>
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','lines',-1)">−</button>
-            <input class="bn-sz-inp" id="ovr-news-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
-            <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','lines',1)">＋</button>
-            <span class="bn-tit-ovr-lbl">줄</span>
-          </div>
-        </div>
-        <div class="bn-img-ctrl" id="bn-img-ctrl-news">
-          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
-          <div class="bn-img-ctrl-row">
-            <div class="bn-fit-row">
-              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-news-contain" onclick="setBnImgFit('news','contain')">원본비율</button>
-              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-news-cover" onclick="setBnImgFit('news','cover')">꽉채우기</button>
+        <button class="bn-detail-toggle" id="bn-dtog-news" onclick="toggleBnDetail('news')">
+          개별 설정 <span class="dt-chev mi mi-xs">expand_more</span>
+        </button>
+        <div class="bn-detail-body" id="bn-dbody-news">
+          <div class="bn-tit-ovr">
+            <div class="bn-tit-ovr-head">
+              <span class="bn-tit-ovr-label">개별 설정</span>
+              <button class="bn-tit-ovr-reset" onclick="resetTitOvr('news')"><span class="mi mi-xs">undo</span> 초기화</button>
             </div>
-            <div class="bn-pos-grid" id="bn-pos-news">
-              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('news','left top')"></button>
-              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('news','center top')"></button>
-              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('news','right top')"></button>
-              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('news','left center')"></button>
-              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('news','center center')"></button>
-              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('news','right center')"></button>
-              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('news','left bottom')"></button>
-              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('news','center bottom')"></button>
-              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('news','right bottom')"></button>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">강조</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','att',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-news-att" type="number" placeholder="공통" min="8" max="40" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','att',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <textarea class="bn-tit-ovr-textarea" id="tov-news"
+              placeholder="공통 타이틀 사용" rows="2"
+              oninput="rb()"></textarea>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">타이틀 크기</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','tit',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-news-tit" type="number" placeholder="공통" min="10" max="60" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','tit',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">px</span>
+            </div>
+            <div class="bn-tit-ovr-row">
+              <span class="bn-tit-ovr-lbl">최대줄수</span>
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','lines',-1)">−</button>
+              <input class="bn-sz-inp" id="ovr-news-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
+              <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','lines',1)">＋</button>
+              <span class="bn-tit-ovr-lbl">줄</span>
+            </div>
+          </div>
+          <div class="bn-img-ctrl" id="bn-img-ctrl-news">
+            <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+            <div class="bn-img-ctrl-row">
+              <div class="bn-fit-row">
+                <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-news-contain" onclick="setBnImgFit('news','contain')">원본비율</button>
+                <button class="bn-fit-btn" data-fit="cover" id="bn-fit-news-cover" onclick="setBnImgFit('news','cover')">꽉채우기</button>
+              </div>
+              <div class="bn-pos-grid" id="bn-pos-news">
+                <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('news','left top')"></button>
+                <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('news','center top')"></button>
+                <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('news','right top')"></button>
+                <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('news','left center')"></button>
+                <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('news','center center')"></button>
+                <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('news','right center')"></button>
+                <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('news','left bottom')"></button>
+                <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('news','center bottom')"></button>
+                <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('news','right bottom')"></button>
+              </div>
             </div>
           </div>
         </div>
@@ -2838,6 +2875,15 @@ function bnTitleLines(title, fontSize, maxChars, maxLines, attClr, titClr, style
     }
     return '<div style="font-size:'+fontSize+'px;font-weight:'+weight+';color:'+color+';line-height:'+lineH+';word-break:keep-all;overflow-wrap:anywhere;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;letter-spacing:-0.02em;">'+escHtml(l)+'</div>';
   }).join('');
+}
+
+/* ── 배너 개별 설정 토글 ── */
+function toggleBnDetail(type){
+  var btn  = eid('bn-dtog-'+type);
+  var body = eid('bn-dbody-'+type);
+  if(!btn || !body) return;
+  var open = body.classList.toggle('open');
+  btn.classList.toggle('open', open);
 }
 
 /* ── 이미지 맞춤/위치 제어 ── */
