@@ -3993,6 +3993,29 @@ function collectPreviewState(){
   return s;
 }
 
+/* 안내문 PNG 캡처 — 10MB 초과 시 scale 단계 축소 (PNG 포맷 유지, 화질 손실 없음)
+   scale 2 → 1.5 → 1 순으로 재시도 */
+function _captureGuide(el){
+  var MAX = 10 * 1024 * 1024; /* 10MB */
+  var scales = [2, 1.5, 1];
+
+  function tryScale(i){
+    var scale = scales[i];
+    var opts = {scale:scale, useCORS:true, allowTaint:true, logging:false};
+    return html2canvas(el, opts).then(function(canvas){
+      var png = canvas.toDataURL('image/png');
+      var bytes = Math.round(png.length * 0.75); /* base64 → 실제 바이트 근사 */
+      /* 10MB 이하이거나 마지막 scale이면 사용 */
+      if(bytes <= MAX || i === scales.length - 1){
+        return {k:'guide', png:png, scale:scale};
+      }
+      /* 초과면 다음 scale로 재시도 */
+      return tryScale(i + 1);
+    });
+  }
+  return tryScale(0);
+}
+
 /* ── 미리보기: 에디터에서 html2canvas 캡처 → localStorage 저장 → 짧은 키 URL ── */
 var _pvCapKey = null; /* 현재 캡처 키 (preview 탭의 다운로드에서 참조) */
 
@@ -4012,11 +4035,9 @@ function openPreview(){
   var bannerTypes = ['v200','v170','strip','news'];
   var tasks = [];
 
-  /* 안내문 캡처 */
+  /* 안내문 캡처 — 10MB 이내가 될 때까지 scale 단계적 축소 (PNG 유지, 화질 손실 없음) */
   var gr = eid('guide-root');
-  if(gr) tasks.push(
-    html2canvas(gr, h2c2).then(function(c){ return {k:'guide', png:c.toDataURL('image/png')}; })
-  );
+  if(gr) tasks.push(_captureGuide(gr));
 
   /* 배너 4종 캡처 */
   bannerTypes.forEach(function(t){
