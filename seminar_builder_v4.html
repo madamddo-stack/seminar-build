@@ -2464,7 +2464,12 @@ function syncSwInput(id, val){
 ══════════════════════════════ */
 /* 배경색 밝기 판별 (hex → luminance) */
 function _isDarkHex(hex){
-  if(!hex || hex[0]!=='#') return false;
+  if(!hex) return false;
+  /* rgb(r, g, b) 형식 대응 */
+  var m = hex.match(/^rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)/);
+  if(m) return (0.299*+m[1] + 0.587*+m[2] + 0.114*+m[3]) < 128;
+  /* #rrggbb / #rgb 형식 */
+  if(hex[0]!=='#') return false;
   var h = hex.length===4
     ? '#'+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3]
     : hex;
@@ -3958,6 +3963,14 @@ function collectPreviewState(){
     });
     var tv=eid('tov-'+t); if(tv&&tv.value) s.bnf['tov-'+t]=tv.value;
   });
+  /* 이미지: URL 해시가 너무 커지므로 localStorage에 별도 보관 후 키만 포함 */
+  var pvImgKey = 'sb_pv_img_'+Date.now();
+  var ilImg = eid('il-img');
+  var imgStore = {
+    illustSrc: (ilImg && ilImg.src && ilImg.style.display!=='none') ? ilImg.src : '',
+    bnImgSrc:  _bnImgSrc || ''
+  };
+  try{ localStorage.setItem(pvImgKey, JSON.stringify(imgStore)); s.pvImgKey = pvImgKey; }catch(e){}
   return s;
 }
 
@@ -4022,12 +4035,34 @@ function applyPreviewState(s){
   }
   /* 배너 필드 */
   if(s.bnf) Object.keys(s.bnf).forEach(function(id){ var el=eid(id); if(el&&el.tagName) el.value=s.bnf[id]; });
+  /* 이미지 복원 — 직접 저장된 경우 */
+  if(s.illustSrc){ _applyIllustSrc(s.illustSrc); }
+  if(s.bnImgSrc)  { setBnImg(s.bnImgSrc); }
+  /* 이미지 복원 — 미리보기 URL: localStorage에 저장된 키 참조 */
+  if(s.pvImgKey){
+    try{
+      var imgs = JSON.parse(localStorage.getItem(s.pvImgKey)||'{}');
+      if(imgs.illustSrc) _applyIllustSrc(imgs.illustSrc);
+      if(imgs.bnImgSrc)  setBnImg(imgs.bnImgSrc);
+    }catch(e){}
+  }
+}
+
+/* 일러스트 src 복원 헬퍼 */
+function _applyIllustSrc(src){
+  if(!src) return;
+  var ilImg = eid('il-img');
+  if(!ilImg) return;
+  ilImg.src = src;
+  ilImg.style.display = 'block';
+  var ilPh = eid('il-ph'); if(ilPh) ilPh.style.display = 'none';
 }
 
 function showPreviewLayout(){
   document.body.classList.add('preview-mode');
   var root=eid('guide-root'); if(root) root.classList.remove('ed-mode');
-  /* 배너 4종 모두 렌더 */
+  /* 안내문 → 배너 필드 동기화 후 렌더 */
+  syncFromGuide();
   var d=getBnData();
   ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
   /* banner-page에 inline display:none 제거 */
@@ -4229,6 +4264,10 @@ function collectHistState(){
   state.chkClr = (eid('sw-chk') && eid('sw-chk').style.background) || '';
   /* 배너 이미지 맞춤/위치 */
   state.bnImgCtrl = JSON.parse(JSON.stringify(_bnImgCtrl));
+  /* 이미지 src (base64 포함 전체 저장 — localStorage용) */
+  var ilImg = eid('il-img');
+  state.illustSrc = (ilImg && ilImg.src && ilImg.style.display !== 'none') ? ilImg.src : '';
+  state.bnImgSrc  = _bnImgSrc || '';
   return state;
 }
 
