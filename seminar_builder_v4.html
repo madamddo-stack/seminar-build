@@ -581,27 +581,6 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 /* ══════════════════════════════════════════
    미리보기 모드
 ══════════════════════════════════════════ */
-#preview-header{
-  display:none;position:fixed;top:0;left:0;right:0;z-index:9000;
-  height:52px;background:#fff;border-bottom:1px solid #E5E7EB;
-  align-items:center;justify-content:space-between;padding:0 24px;
-  gap:12px;
-}
-body.preview-mode #preview-header{display:flex;}
-.ph-left{display:flex;align-items:center;gap:10px;}
-.ph-logo{width:28px;height:28px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;}
-.ph-logo img{height:14px;width:auto;}
-.ph-title{font-size:14px;font-weight:700;color:#111;}
-.ph-right{display:flex;align-items:center;gap:8px;}
-.ph-btn{
-  background:none;border:1px solid #E5E7EB;border-radius:8px;
-  padding:6px 14px;font-size:13px;font-weight:600;color:#374151;
-  cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;
-  display:inline-flex;align-items:center;gap:5px;
-}
-.ph-btn:hover{background:#F9FAFB;border-color:#D1D5DB;}
-.ph-btn-dark{background:#131927;color:#fff;border-color:#131927;}
-.ph-btn-dark:hover{background:#212936;border-color:#212936;}
 
 /* Preview mode: 에디터 UI 숨기기 */
 body.preview-mode #topbar,
@@ -614,11 +593,11 @@ body.preview-mode,
 body.preview-mode #app{ height:auto!important; overflow:visible!important; }
 
 body.preview-mode #main-area{
-  display:block!important; height:auto!important; overflow:visible!important; padding-top:52px;
+  display:block!important; height:auto!important; overflow:visible!important; padding-top:0;
 }
 body.preview-mode #canvas-area{
   display:block!important; height:auto!important; overflow:visible!important;
-  background:#F3F4F6; padding:40px 32px 80px; align-items:unset;
+  background:#F3F4F6; padding:48px 32px 80px; align-items:unset;
 }
 body.preview-mode #guide-page{
   display:flex!important; justify-content:center;
@@ -628,7 +607,7 @@ body.preview-mode #banner-page{
   display:block!important; background:transparent;
   max-width:1000px; margin:0 auto;
 }
-/* bn-tit-ovr preview-mode 숨김은 .bn-detail-body 규칙으로 통합 */
+/* 편집 컨트롤 모두 숨김 */
 body.preview-mode .add-row-area,
 body.preview-mode .row-ctrl,
 body.preview-mode .tit-ctrl,
@@ -638,58 +617,10 @@ body.preview-mode .chk-del-btn,
 body.preview-mode .ov-type-bar{ display:none!important; }
 body.preview-mode .ed{ outline:none!important; box-shadow:none!important; }
 body.preview-mode #edit-hint{ display:none!important; }
+#pv-guide-dl,#preview-bn-heading{ display:none!important; }
 
-/* Preview 안내문 다운로드 바 */
-#pv-guide-dl{
-  display:none; justify-content:center; padding:20px 0 0;
-}
-body.preview-mode #pv-guide-dl{ display:flex; }
-.pv-dl-bar{
-  display:flex; align-items:center; gap:10px;
-  background:#fff; border:1px solid #E5E7EB; border-radius:12px;
-  padding:12px 20px; box-shadow:0 2px 8px rgba(0,0,0,.07);
-}
-.pv-dl-label{
-  font-size:13px; font-weight:600; color:#374151; margin-right:4px;
-}
-.pv-dl-btn{
-  display:inline-flex; align-items:center; gap:6px;
-  background:#131927; color:#fff; border:none; border-radius:8px;
-  padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer;
-  font-family:inherit; transition:background .15s; white-space:nowrap;
-}
-.pv-dl-btn:hover{ background:#2d3748; }
-.pv-dl-btn.ghost{
-  background:#fff; color:#374151; border:1px solid #E5E7EB;
-}
-.pv-dl-btn.ghost:hover{ background:#F9FAFB; }
-.pv-dl-divider{ width:1px; height:24px; background:#E5E7EB; }
-
-/* Preview 배너 섹션 헤더 */
-#preview-bn-heading{
-  display:none;
-  align-items:center; justify-content:space-between;
-  max-width:1000px; margin:40px auto 16px; padding:0;
-}
-body.preview-mode #preview-bn-heading{ display:flex; }
-.pv-bn-heading-label{
-  font-size:13px; font-weight:700; color:#6B7280;
-  letter-spacing:.06em; text-transform:uppercase;
-}
-
-/* Preview 모드에서 배너 블록 다운로드 버튼 강조 */
-body.preview-mode .bn-block-head{
-  background:#F9FAFB; border-radius:8px;
-  padding:10px 14px; margin-bottom:12px;
-}
-body.preview-mode .bn-block-btn{
-  padding:7px 14px; font-size:13px; font-weight:600;
-  border-radius:7px; gap:5px;
-}
-body.preview-mode .bn-block-btn:first-child{
-  background:#131927; color:#fff; border-color:#131927;
-}
-body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
+/* Preview 모드에서 배너 블록 헤더(버튼) 숨김 */
+body.preview-mode .bn-block-head{ display:none!important; }
 
 /* ─── 파트너 로고 픽커 팝업 ─────────────── */
 #partner-picker{
@@ -1527,7 +1458,6 @@ body.preview-mode .bn-detail-body{ display:none!important; }
   </div>
   <div class="tb-right">
     <button class="tb-btn-ghost-v4" onclick="saveHistory()">완료 저장</button>
-    <button class="tb-btn-ghost-v4" id="btn-share-url" onclick="shareShortUrl()">URL 공유</button>
     <button class="tb-btn-ghost-v4" id="btn-preview" onclick="openPreview()">미리보기</button>
     <div class="tb-btn-dl-wrap">
       <button class="tb-btn-dark-v4 main" onclick="handleMainDl()">다운로드</button>
@@ -2248,24 +2178,10 @@ body.preview-mode .bn-detail-body{ display:none!important; }
 </div><!-- /main-area -->
 </div><!-- /app -->
 
-<!-- 미리보기 헤더 -->
-<div id="preview-header">
-  <div class="ph-left">
-    <div class="ph-logo"><img src="img/bi_jk.svg" alt="잡코리아"></div>
-    <span class="ph-title">세미나 미리보기</span>
-  </div>
-  <div class="ph-right">
-    <button class="ph-btn" onclick="pvDlGuide(this)"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
-    <button class="ph-btn ph-btn-dark" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
-  </div>
-</div>
 <!-- 안내문 다운로드 바 (preview mode) -->
 <div id="pv-guide-dl"></div>
 <!-- 배너 섹션 레이블 -->
-<div id="preview-bn-heading">
-  <span class="pv-bn-heading-label">배너 4종</span>
-  <button class="pv-dl-btn" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 4종 전체 저장</button>
-</div>
+<div id="preview-bn-heading"></div>
 
 <!-- 파트너 로고 픽커 팝업 -->
 <div id="partner-picker">
@@ -4057,43 +3973,9 @@ function _generateCompressedUrl(){
   return window.location.origin + window.location.pathname + '?mode=preview' + prefix + compressed;
 }
 
-/* is.gd API로 단축 URL 생성 (Promise) */
-function _shorten(longUrl){
-  return fetch('https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl))
-    .then(function(res){ return res.text(); })
-    .then(function(t){
-      t = t.trim();
-      if(!t.startsWith('http')) throw new Error('is.gd: ' + t);
-      return t;
-    });
-}
-
 function openPreview(){
   var longUrl = _generateCompressedUrl();
   window.open(longUrl, '_blank');
-}
-
-function shareShortUrl(){
-  var btn = eid('btn-share-url');
-  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
-
-  var longUrl = _generateCompressedUrl();
-
-  _shorten(longUrl)
-  .then(function(shortUrl){
-    return navigator.clipboard.writeText(shortUrl);
-  })
-  .then(function(){ showToast('✅ 단축 URL이 복사되었습니다'); })
-  .catch(function(e){
-    /* is.gd 실패 시 압축된 긴 URL로 폴백 */
-    console.warn('is.gd failed, using long URL:', e);
-    navigator.clipboard.writeText(longUrl)
-      .then(function(){ showToast('URL이 복사되었습니다'); })
-      .catch(function(){ showToast('복사 실패', true); });
-  })
-  .finally(function(){
-    if(btn){ btn.textContent = 'URL 공유'; btn.disabled = false; }
-  });
 }
 
 function applyPreviewState(s){
@@ -4174,17 +4056,8 @@ function showPreviewLayout(){
   syncFromGuide();
   var d=getBnData();
   ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
-  /* banner-page에 inline display:none 제거 */
+  /* banner-page inline display:none 해제 */
   var bp=eid('banner-page'); if(bp) bp.style.display='block';
-  /* 안내문 다운로드 바 — guide-page 뒤에 삽입 */
-  var guidePage=eid('guide-page');
-  var pvGuideDl=eid('pv-guide-dl');
-  if(pvGuideDl && guidePage && guidePage.parentNode){
-    guidePage.parentNode.insertBefore(pvGuideDl, guidePage.nextSibling);
-  }
-  /* 배너 섹션 레이블 — banner-page 앞에 삽입 */
-  var bnh=eid('preview-bn-heading');
-  if(bnh&&bp&&bp.parentNode) bp.parentNode.insertBefore(bnh,bp);
 }
 
 function initPreviewMode(){
