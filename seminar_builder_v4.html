@@ -1497,7 +1497,8 @@ body.preview-mode .bn-detail-body{ display:none!important; }
   </div>
   <div class="tb-right">
     <button class="tb-btn-ghost-v4" onclick="saveHistory()">완료 저장</button>
-    <button class="tb-btn-ghost-v4" onclick="openPreview()">미리보기</button>
+    <button class="tb-btn-ghost-v4" id="btn-share-url" onclick="shareShortUrl()">URL 공유</button>
+    <button class="tb-btn-ghost-v4" id="btn-preview" onclick="openPreview()">미리보기</button>
     <div class="tb-btn-dl-wrap">
       <button class="tb-btn-dark-v4 main" onclick="handleMainDl()">다운로드</button>
       <button class="tb-btn-dark-v4 caret" onclick="toggleDlMenu()"><span class="mi mi-xs">expand_more</span></button>
@@ -3989,9 +3990,57 @@ function copyPreviewUrl(){
     .catch(function(){ showToast('복사 실패', true); });
 }
 
+/* jsonblob에 상태를 올리고 단축 URL 반환 (Promise) */
+function _uploadPreviewState(){
+  var state = collectPreviewState();
+  return fetch('https://jsonblob.com/api/jsonBlob', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    body: JSON.stringify(state)
+  })
+  .then(function(res){
+    if(!res.ok) throw new Error('API ' + res.status);
+    var loc = res.headers.get('Location');
+    if(!loc) throw new Error('no Location header');
+    var id = loc.split('/').pop();
+    return window.location.origin + window.location.pathname + '?mode=preview&jb=' + id;
+  });
+}
+
 function openPreview(){
-  var url = generatePreviewUrl();
-  window.open(url, '_blank');
+  /* 팝업 차단 방지: 사용자 이벤트 내에서 즉시 창 열기 */
+  var win = window.open('about:blank', '_blank');
+  var btn = eid('btn-preview');
+  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
+
+  _uploadPreviewState()
+  .catch(function(e){
+    /* jsonblob 실패 시 긴 URL로 폴백 */
+    console.warn('jsonblob upload failed, fallback to long URL:', e);
+    return generatePreviewUrl();
+  })
+  .then(function(url){
+    if(win) win.location.href = url;
+    if(btn){ btn.textContent = '미리보기'; btn.disabled = false; }
+  });
+}
+
+function shareShortUrl(){
+  var btn = eid('btn-share-url');
+  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
+
+  _uploadPreviewState()
+  .then(function(url){
+    return navigator.clipboard.writeText(url).then(function(){ return url; });
+  })
+  .then(function(){ showToast('✅ 단축 URL이 복사되었습니다'); })
+  .catch(function(e){
+    console.warn('short URL failed, fallback:', e);
+    copyPreviewUrl();
+  })
+  .finally(function(){
+    if(btn){ btn.textContent = 'URL 공유'; btn.disabled = false; }
+  });
 }
 
 function applyPreviewState(s){
@@ -4079,15 +4128,42 @@ function showPreviewLayout(){
 }
 
 function initPreviewMode(){
-  if(window.location.search.indexOf('mode=preview')===-1) return false;
-  var hash=window.location.hash.slice(1);
+  var params = new URLSearchParams(window.location.search);
+  if(params.get('mode') !== 'preview') return false;
+
+  var jbId = params.get('jb');
+  if(jbId){
+    /* 즉시 preview-mode 클래스 적용 → 에디터 UI 숨김 */
+    document.body.classList.add('preview-mode');
+    var root = eid('guide-root'); if(root) root.classList.remove('ed-mode');
+    /* jsonblob에서 상태 비동기 로드 */
+    fetch('https://jsonblob.com/api/jsonBlob/' + jbId, {
+      headers: {'Accept': 'application/json'}
+    })
+    .then(function(res){
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(s){
+      applyPreviewState(s);
+      showPreviewLayout();
+    })
+    .catch(function(e){
+      console.error('jsonblob load error:', e);
+      showToast('미리보기 로드 실패', true);
+    });
+    return true;
+  }
+
+  /* 레거시: URL 해시(base64) 방식 */
+  var hash = window.location.hash.slice(1);
   if(!hash) return false;
   try{
-    var s=JSON.parse(decodeURIComponent(escape(atob(hash))));
+    var s = JSON.parse(decodeURIComponent(escape(atob(hash))));
     applyPreviewState(s);
     showPreviewLayout();
     return true;
-  }catch(e){ console.error('Preview decode error:',e); return false; }
+  }catch(e){ console.error('Preview decode error:', e); return false; }
 }
 
 
