@@ -372,11 +372,37 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .tit-ctrl-btn:hover{background:#f0f4ff;color:#4285f4;}
 
+/* 강조타이틀 래퍼 */
+.att-wrap{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 48px;
+}
+/* 삭제 버튼 — 기본 숨김, 에디터 호버 시 표시 */
+.att-del-btn{
+  position:absolute;right:4px;top:50%;transform:translateY(-50%);
+  display:none;
+  width:26px;height:26px;align-items:center;justify-content:center;
+  background:#fff;border:1px solid #e0e0e0;border-radius:7px;
+  color:#999;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  transition:background .12s,color .12s;
+}
+.att-del-btn:hover{background:#FEF2F2;color:#EF4444;border-color:#FECACA;}
+.ed-mode .att-wrap:hover .att-del-btn{ display:flex; }
+
 /* 빈 ed-att: 미리보기·출력 시 완전 숨김 */
 #ed-att:empty:not(:focus){
   display:none !important;
 }
+/* 빈 att-wrap: 미리보기·출력 시 숨김 */
+.att-wrap:has(#ed-att:empty:not(:focus)){
+  display:none !important;
+}
 /* 에디터 모드에서는 빈 경우에도 ghost 영역 유지 */
+.ed-mode .att-wrap:has(#ed-att:empty:not(:focus)){
+  display:flex !important;
+}
 .ed-mode #ed-att:empty:not(:focus){
   display:block !important;
   border:1.5px dashed #D1D5DB;
@@ -1688,9 +1714,14 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <div style="text-align:center;padding:0 50px;display:flex;flex-direction:column;gap:20px;align-items:center;width:900px;box-sizing:border-box;">
 
       <!-- 강조 타이틀 (비우면 자동 숨김) -->
-      <div class="ed" id="ed-att" contenteditable="true"
-        style="font-family:'Paperlogy',sans-serif;font-size:62px;font-weight:900;color:#3f3f3f;line-height:1.24;text-decoration:underline;letter-spacing:-0.01em;width:800px;display:block;"
-        data-ph="강조 타이틀 (비우면 숨김)">입법 임박!</div>
+      <div class="att-wrap" id="att-wrap">
+        <button class="att-del-btn" onclick="clearAttTitle()" title="강조 타이틀 삭제">
+          <span class="mi mi-xs">close</span>
+        </button>
+        <div class="ed" id="ed-att" contenteditable="true"
+          style="font-family:'Paperlogy',sans-serif;font-size:62px;font-weight:900;color:#3f3f3f;line-height:1.24;text-decoration:underline;letter-spacing:-0.01em;width:800px;display:block;"
+          data-ph="강조 타이틀 (비우면 숨김)">입법 임박!</div>
+      </div>
 
       <!-- 메인 타이틀 -->
       <div class="tit-wrap" id="tit-wrap-title">
@@ -2560,6 +2591,12 @@ function applyTitSwap(swapped){
   if(swapped && !isSwapped){ parent.insertBefore(wSub, wTitle); _titSwapped = true; }
   else if(!swapped && isSwapped){ parent.insertBefore(wTitle, wSub); _titSwapped = false; }
   _updateSwapLabels();
+}
+/* 강조 타이틀 삭제 */
+function clearAttTitle(){
+  var att = eid('ed-att'); if(!att) return;
+  att.innerHTML = '';
+  scheduleAutoSave();
 }
 /* applyAttC 역할은 applyMain 으로 통합됨 */
 function applyBtnC(v){
