@@ -3994,15 +3994,23 @@ function collectPreviewState(){
 }
 
 /* ── 미리보기: 에디터에서 html2canvas 캡처 → localStorage 저장 → 짧은 키 URL ── */
-/* 미리보기는 화면 확인용 → scale:1 (빠름)
-   고화질 저장은 에디터 다운로드 버튼 사용 */
 var _pvCapKey = null;
+
+/* 단일 요소 캡처 — 8초 타임아웃, 실패 시 null 반환 */
+function _capEl(el, opts){
+  var timeout = new Promise(function(resolve){
+    setTimeout(function(){ resolve(null); }, 8000);
+  });
+  var capture = html2canvas(el, opts).then(function(c){
+    return c.toDataURL('image/png');
+  }).catch(function(){ return null; });
+  return Promise.race([capture, timeout]);
+}
 
 function openPreview(){
   var btn = eid('btn-preview');
   if(btn){ btn.textContent='캡처 중…'; btn.disabled=true; }
 
-  /* 배너 렌더 보장 */
   syncFromGuide();
   var d = getBnData();
   ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
@@ -4010,43 +4018,42 @@ function openPreview(){
   var bpWasHidden = bp && bp.style.display === 'none';
   if(bpWasHidden) bp.style.display = 'block';
 
-  /* scale:1 — 미리보기용 빠른 캡처 */
-  var h2c = {scale:1, useCORS:true, allowTaint:true, logging:false};
+  /* imageTimeout:3000 — 외부 이미지 로딩 대기 최대 3초 */
+  var h2c = {scale:1, useCORS:true, allowTaint:true, logging:false, imageTimeout:3000};
   var bannerTypes = ['v200','v170','strip','news'];
   var tasks = [];
 
   var gr = eid('guide-root');
-  if(gr) tasks.push(
-    html2canvas(gr, h2c).then(function(c){ return {k:'guide', png:c.toDataURL('image/png')}; })
-  );
+  if(gr) tasks.push(_capEl(gr, h2c).then(function(png){ return {k:'guide', png:png}; }));
 
   bannerTypes.forEach(function(t){
     var st = eid('bn-stage-'+t);
-    if(st) tasks.push(
-      html2canvas(st, h2c).then(function(c){ return {k:t, png:c.toDataURL('image/png')}; })
-    );
+    if(st) tasks.push(_capEl(st, h2c).then(function(png){ return {k:t, png:png}; }));
   });
 
   Promise.all(tasks).then(function(results){
     var cap = {};
-    results.forEach(function(r){ cap[r.k] = r.png; });
+    results.forEach(function(r){ if(r.png) cap[r.k] = r.png; });
 
     var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
     var saved = false;
     try{ localStorage.setItem('sb_pvcap_'+key, JSON.stringify(cap)); saved=true; }catch(e){
-      /* 용량 초과: 안내문만 저장 */
       try{
         var small = {guide: cap.guide};
         localStorage.setItem('sb_pvcap_'+key, JSON.stringify(small)); saved=true;
       }catch(e2){}
     }
-    if(!saved){ showToast('미리보기 저장 실패 (저장 공간 부족)', true); return; }
 
+    /* 저장 성공 여부와 관계없이 탭은 항상 열기 */
     var url = window.location.origin+window.location.pathname+'?mode=preview&k='+key;
+    if(!saved){
+      /* localStorage 실패 → 빈 미리보기라도 열기 */
+      showToast('저장 공간 부족 — 미리보기 일부 제한될 수 있음', true);
+    }
     window.open(url, '_blank');
   }).catch(function(e){
-    console.error('openPreview capture error:', e);
-    showToast('캡처 실패', true);
+    console.error('openPreview error:', e);
+    showToast('캡처 중 오류 발생', true);
   }).finally(function(){
     if(bpWasHidden) bp.style.display = 'none';
     if(btn){ btn.textContent='미리보기'; btn.disabled=false; }
