@@ -240,7 +240,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .pg-item.pg-active{border-color:#131927;}
 /* 가로 칩: bg 1.5 / title 1 / btn 1 */
 .pg-chip{display:flex;height:28px;}
-.pg-seg-bg   {flex:1.5;}
+.pg-seg-bg   {flex:2;}
 .pg-seg-title{flex:1;}
 .pg-seg-btn  {flex:1;}
 .pg-name{font-size:11px;font-weight:600;color:var(--text-sec);padding:2px 5px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;}
@@ -751,7 +751,7 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 .pal-sw:hover{ border-color:#9CA3AF; box-shadow:0 2px 6px rgba(0,0,0,.1); }
 .pal-sw.active{ border-color:#374151 !important; box-shadow:0 0 0 1.5px #374151; }
 /* 3분할 컬러 세그먼트: bg 1.5 / title 1 / btn 1 */
-.pal-seg-bg   { flex:1.5; }
+.pal-seg-bg   { flex:2; }
 .pal-seg-title{ flex:1; }
 .pal-seg-btn  { flex:1; }
 /* 팔레트명 툴팁 */
@@ -2527,12 +2527,14 @@ function applyLogoMode(dark){
 function applyBg(v){
   eid('guide-root').style.background = v;
   eid('sw-bg').style.background = v;
+  syncSwInput('sw-bg', v);
   applyLogoMode(_isDarkHex(v));
 }
 function applyMain(v){
   /* 포인트 = 강조타이틀 (있을 수도, 없을 수도 있는 선택적 요소) */
   var att = eid('ed-att'); if(att) att.style.color = v;
   var sw  = eid('sw-main'); if(sw) sw.style.background = v;
+  syncSwInput('sw-main', v);
 }
 function applyDtit(v){
   /* 섹션타이틀 — 팔레트 자동 적용, 별도 스와치 없음 */
@@ -2541,12 +2543,14 @@ function applyDtit(v){
 function applyTitleC(v){
   eid('ed-title').style.color = v;
   eid('sw-title').style.background = v;
+  syncSwInput('sw-title', v);
   /* 세미나 상세내용 타이틀 = 메인타이틀과 동일 컬러 */
   var dtit = eid('ed-dtit'); if(dtit) dtit.style.color = v;
 }
 function applySubC(v){
   eid('ed-sub').style.color = v;
   eid('sw-sub').style.background = v;
+  syncSwInput('sw-sub', v);
 }
 
 /* ── 메인타이틀 ↕ 소타이틀 순서 교환 ── */
@@ -2608,6 +2612,7 @@ function applyBtnC(v){
 function applyChkC(v){
   document.querySelectorAll('.chk-path').forEach(function(p){ p.setAttribute('stroke', v); });
   eid('sw-chk').style.background = v;
+  syncSwInput('sw-chk', v);
 }
 function stepBnSize(field, delta){
   var id = field === 'att' ? 'bn-att-size' : 'bn-tit-size';
@@ -4130,6 +4135,8 @@ function applyPreviewState(s){
       if(imgs.bnImgSrc)  setBnImg(imgs.bnImgSrc);
     }catch(e){}
   }
+  /* inspect 패널 최신화 */
+  updateInspect();
 }
 
 /* 일러스트 src 복원 헬퍼 */
@@ -4412,6 +4419,7 @@ function saveHistory(){
       showToast('⚠️ 저장 실패: 저장 공간 부족', true);
     }
   }
+  updateInspect();
 }
 
 function loadHistList(){
