@@ -8,7 +8,6 @@
 <link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <style>
 /* ─── Reset ──────────────────────────────────── */
@@ -3994,64 +3993,29 @@ function collectPreviewState(){
   return s;
 }
 
-function generatePreviewUrl(){
-  try{
-    var state = collectPreviewState();
-    var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-    return window.location.origin+window.location.pathname+'?mode=preview#'+encoded;
-  }catch(e){ return window.location.href; }
-}
-
-function copyPreviewUrl(){
-  var url = generatePreviewUrl();
-  navigator.clipboard && navigator.clipboard.writeText(url)
-    .then(function(){ showToast('URL이 복사되었습니다'); })
-    .catch(function(){ showToast('복사 실패', true); });
-}
-
-/* jsonblob에 상태를 올리고 단축 URL 반환 (Promise) */
-/* ── 미리보기 공유 URL: LZString 압축 → is.gd 단축 ── */
-
-/* 프리뷰 전용 경량 상태: 편집 버튼 제거로 용량 절감 */
-function _collectPreviewStateSlim(){
-  var s = collectPreviewState();
-  /* base64 이미지 제거 — URL 크기 감소 */
-  s.illustSrc = '';
-  s.bnImgSrc  = '';
-  /* det-rows 에서 편집 전용 .row-ctrl 제거 */
-  if(s.detHtml){
-    var tmp = document.createElement('div');
-    tmp.innerHTML = s.detHtml;
-    tmp.querySelectorAll('.row-ctrl,.att-del-btn,.tit-ctrl').forEach(function(el){ el.remove(); });
-    s.detHtml = tmp.innerHTML;
-  }
-  return s;
-}
-
-/* LZString 압축 후 긴 URL 생성 */
-function _generateCompressedUrl(){
-  var state = _collectPreviewStateSlim();
-  var compressed = (typeof LZString !== 'undefined')
-    ? LZString.compressToEncodedURIComponent(JSON.stringify(state))
-    : btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-  var prefix = (typeof LZString !== 'undefined') ? '#lz:' : '#';
-  return window.location.origin + window.location.pathname + '?mode=preview' + prefix + compressed;
-}
-
-function _shorten(longUrl){
-  return fetch('https://is.gd/create.php?format=simple&url='+encodeURIComponent(longUrl))
-    .then(function(r){ return r.text(); })
-    .then(function(t){ t=t.trim(); if(!t.startsWith('http')) throw new Error(t); return t; });
-}
-
+/* ── 미리보기: 전체 상태(이미지 포함)를 localStorage 저장 후 짧은 키 URL로 새 탭 오픈 ── */
 function openPreview(){
-  var btn = eid('btn-preview');
-  if(btn){ btn.textContent='생성 중…'; btn.disabled=true; }
-  var longUrl = _generateCompressedUrl();
-  _shorten(longUrl)
-    .then(function(shortUrl){ window.open(shortUrl,'_blank'); })
-    .catch(function(){ window.open(longUrl,'_blank'); })
-    .finally(function(){ if(btn){ btn.textContent='미리보기'; btn.disabled=false; } });
+  var state = collectPreviewState(); /* illustSrc, bnImgSrc 포함 */
+  var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+  var saved = false;
+
+  try{
+    localStorage.setItem('sb_pv_'+key, JSON.stringify(state));
+    saved = true;
+  }catch(e){
+    /* QuotaExceeded: 이미지 제외 후 재시도 */
+    try{
+      state.illustSrc = '';
+      state.bnImgSrc  = '';
+      localStorage.setItem('sb_pv_'+key, JSON.stringify(state));
+      saved = true;
+    }catch(e2){}
+  }
+
+  if(!saved){ showToast('미리보기 저장 실패', true); return; }
+
+  var url = window.location.origin + window.location.pathname + '?mode=preview&k=' + key;
+  window.open(url, '_blank');
 }
 
 function applyPreviewState(s){
@@ -4195,23 +4159,13 @@ function initPreviewMode(){
   var params = new URLSearchParams(window.location.search);
   if(params.get('mode') !== 'preview') return false;
 
-  /* 상태 복원 시도 (실패해도 레이아웃은 반드시 전환) */
-  var hash = window.location.hash.slice(1);
-
-  if(hash.startsWith('lz:')){
-    /* LZString 압축 해시 방식 */
+  /* localStorage 키 방식 (이미지 포함 전체 상태) */
+  var k = params.get('k');
+  if(k){
     try{
-      var json = (typeof LZString !== 'undefined')
-        ? LZString.decompressFromEncodedURIComponent(hash.slice(3))
-        : null;
-      if(json){ var s = JSON.parse(json); if(s) applyPreviewState(s); }
-    }catch(e){ console.error('LZ decode error:', e); }
-  } else if(hash){
-    /* 레거시: base64 방식 */
-    try{
-      var s = JSON.parse(decodeURIComponent(escape(atob(hash))));
+      var s = JSON.parse(localStorage.getItem('sb_pv_'+k)||'null');
       if(s) applyPreviewState(s);
-    }catch(e){ console.error('Preview decode error:', e); }
+    }catch(e){ console.error('Preview restore error:', e); }
   }
 
   /* 레이아웃 전환은 항상 실행 */
