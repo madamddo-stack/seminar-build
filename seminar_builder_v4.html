@@ -2233,8 +2233,8 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <span class="ph-title">세미나 미리보기</span>
   </div>
   <div class="ph-right">
-    <button class="ph-btn" onclick="dlGuidePng()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
-    <button class="ph-btn ph-btn-dark" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
+    <button class="ph-btn" onclick="pvDlGuide()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
+    <button class="ph-btn ph-btn-dark" onclick="pvDlBanners()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
   </div>
 </div>
 <!-- 안내문 다운로드 바 (legacy placeholder) -->
@@ -3993,29 +3993,63 @@ function collectPreviewState(){
   return s;
 }
 
-/* ── 미리보기: 전체 상태(이미지 포함)를 localStorage 저장 후 짧은 키 URL로 새 탭 오픈 ── */
+/* ── 미리보기: 에디터에서 html2canvas 캡처 → localStorage 저장 → 짧은 키 URL ── */
+var _pvCapKey = null; /* 현재 캡처 키 (preview 탭의 다운로드에서 참조) */
+
 function openPreview(){
-  var state = collectPreviewState(); /* illustSrc, bnImgSrc 포함 */
-  var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-  var saved = false;
+  var btn = eid('btn-preview');
+  if(btn){ btn.textContent='캡처 중…'; btn.disabled=true; }
 
-  try{
-    localStorage.setItem('sb_pv_'+key, JSON.stringify(state));
-    saved = true;
-  }catch(e){
-    /* QuotaExceeded: 이미지 제외 후 재시도 */
-    try{
-      state.illustSrc = '';
-      state.bnImgSrc  = '';
-      localStorage.setItem('sb_pv_'+key, JSON.stringify(state));
-      saved = true;
-    }catch(e2){}
-  }
+  /* 배너 렌더 보장 */
+  syncFromGuide();
+  var d = getBnData();
+  ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
+  var bp = eid('banner-page');
+  var bpWasHidden = bp && bp.style.display === 'none';
+  if(bpWasHidden) bp.style.display = 'block';
 
-  if(!saved){ showToast('미리보기 저장 실패', true); return; }
+  var h2c2 = {scale:2, useCORS:true, allowTaint:true, logging:false};
+  var bannerTypes = ['v200','v170','strip','news'];
+  var tasks = [];
 
-  var url = window.location.origin + window.location.pathname + '?mode=preview&k=' + key;
-  window.open(url, '_blank');
+  /* 안내문 캡처 */
+  var gr = eid('guide-root');
+  if(gr) tasks.push(
+    html2canvas(gr, h2c2).then(function(c){ return {k:'guide', png:c.toDataURL('image/png')}; })
+  );
+
+  /* 배너 4종 캡처 */
+  bannerTypes.forEach(function(t){
+    var st = eid('bn-stage-'+t);
+    if(st) tasks.push(
+      html2canvas(st, h2c2).then(function(c){ return {k:t, png:c.toDataURL('image/png')}; })
+    );
+  });
+
+  Promise.all(tasks).then(function(results){
+    var cap = {};
+    results.forEach(function(r){ cap[r.k] = r.png; });
+
+    var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+    var saved = false;
+    try{ localStorage.setItem('sb_pvcap_'+key, JSON.stringify(cap)); saved=true; }catch(e){
+      /* 용량 초과: 안내문만 저장 */
+      try{
+        var small = {guide: cap.guide};
+        localStorage.setItem('sb_pvcap_'+key, JSON.stringify(small)); saved=true;
+      }catch(e2){}
+    }
+    if(!saved){ showToast('미리보기 저장 실패 (저장 공간 부족)', true); return; }
+
+    var url = window.location.origin+window.location.pathname+'?mode=preview&k='+key;
+    window.open(url, '_blank');
+  }).catch(function(e){
+    console.error('openPreview capture error:', e);
+    showToast('캡처 실패', true);
+  }).finally(function(){
+    if(bpWasHidden) bp.style.display = 'none';
+    if(btn){ btn.textContent='미리보기'; btn.disabled=false; }
+  });
 }
 
 function applyPreviewState(s){
@@ -4096,8 +4130,6 @@ function showPreviewLayout(){
   var d=getBnData();
   ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
   var bp=eid('banner-page'); if(bp) bp.style.display='block';
-  /* DOM 렌더 후 PNG 캡처 */
-  setTimeout(renderPreviewImages, 400);
 }
 
 function renderPreviewImages(){
@@ -4159,18 +4191,75 @@ function initPreviewMode(){
   var params = new URLSearchParams(window.location.search);
   if(params.get('mode') !== 'preview') return false;
 
-  /* localStorage 키 방식 (이미지 포함 전체 상태) */
   var k = params.get('k');
   if(k){
     try{
-      var s = JSON.parse(localStorage.getItem('sb_pv_'+k)||'null');
-      if(s) applyPreviewState(s);
-    }catch(e){ console.error('Preview restore error:', e); }
+      var cap = JSON.parse(localStorage.getItem('sb_pvcap_'+k)||'null');
+      if(cap){ showCapturedImages(cap, k); return true; }
+    }catch(e){ console.error('Preview load error:', e); }
   }
 
-  /* 레이아웃 전환은 항상 실행 */
+  /* 캡처 데이터 없을 때 — 안내문 표시 */
   showPreviewLayout();
   return true;
+}
+
+var _pvCapData = null; /* 다운로드용 캡처 데이터 */
+
+function showCapturedImages(cap, key){
+  _pvCapData = cap;
+  document.body.classList.add('preview-mode','pv-images-ready');
+  var cont = eid('pv-image-container');
+  if(!cont) return;
+
+  var bannerLabels = {
+    v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235',
+    strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'
+  };
+
+  ['guide','v200','v170','strip','news'].forEach(function(type){
+    if(!cap[type]) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'pv-img-wrap '+(type==='guide'?'pv-img-guide':'pv-img-banner');
+    wrap.dataset.type = type;
+
+    if(type !== 'guide'){
+      var lbl = document.createElement('div');
+      lbl.className = 'pv-img-label';
+      lbl.textContent = bannerLabels[type]||type;
+      wrap.appendChild(lbl);
+    }
+
+    var img = document.createElement('img');
+    img.src = cap[type];
+    img.className = 'pv-img';
+    wrap.appendChild(img);
+    cont.appendChild(wrap);
+  });
+}
+
+/* 미리보기 페이지 다운로드 */
+var _pvBannerNames = {
+  v200:'기업라운지좌측_200x275', v170:'기업검색좌측_170x235',
+  strip:'jk_pc_기업라운지띠_940X80', news:'뉴스레터_535x274'
+};
+function _pvDownload(dataUrl, filename){
+  var a = document.createElement('a');
+  a.href = dataUrl; a.download = filename; a.click();
+}
+function pvDlGuide(){
+  if(_pvCapData && _pvCapData.guide){
+    var d = new Date().toISOString().slice(0,10);
+    _pvDownload(_pvCapData.guide, 'seminar_guide_'+d+'.png');
+  } else { dlGuidePng(); }
+}
+function pvDlBanners(){
+  if(_pvCapData){
+    var d = new Date().toISOString().slice(0,10);
+    ['v200','v170','strip','news'].forEach(function(t){
+      if(_pvCapData[t]) _pvDownload(_pvCapData[t], _pvBannerNames[t]+'_'+d+'.png');
+    });
+  } else { pngSaveAll(); }
 }
 
 
