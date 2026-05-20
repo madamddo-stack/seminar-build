@@ -3963,50 +3963,77 @@ function openPreview(){
   var url = window.location.origin + window.location.pathname + '?mode=preview';
   window.open(url, '_blank');
   showToast('미리보기 탭 준비 중…');
-  /* 900ms: 새 탭 DOM 로드 대기 후 캡처 시작 */
-  setTimeout(function(){ _captureForPreview(ch); }, 900);
+
+  /* 핸드셰이크: 미리보기 탭이 'ready' 보내면 캡처 시작 (최대 6초 대기 후 자동 시작) */
+  var started = false;
+  var fallback = setTimeout(function(){
+    if(!started){ started = true; ch.onmessage = null; _captureForPreview(ch); }
+  }, 6000);
+  ch.onmessage = function(e){
+    if(e.data && e.data.type === 'ready' && !started){
+      started = true;
+      clearTimeout(fallback);
+      ch.onmessage = null;
+      _captureForPreview(ch);
+    }
+  };
+}
+
+/* html2canvas + 타임아웃 래퍼 */
+function _h2c(el, opts, ms){
+  return Promise.race([
+    html2canvas(el, opts),
+    new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('h2c-timeout')); }, ms); })
+  ]);
 }
 
 function _captureForPreview(ch){
   var LABELS = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
   var TYPES  = ['v200','v170','strip','news'];
-  /* scale:1 — 미리보기용 (속도 우선); imageTimeout:4000 — CDN 폰트 타임아웃 단축 */
-  var opts   = {scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:4000};
-  var tasks  = [];
-  var done   = 0;
+  /* onclone: 클론 DOM에서 외부 CSS 링크 제거 — CDN 폰트 재요청 차단 (이미 렌더됨) */
+  var opts = {
+    scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
+    onclone: function(doc){ doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); }); }
+  };
+  var tasks = [];
+  var done  = 0;
 
-  /* 배너 렌더 보장 + 숨겨진 경우 off-screen으로 잠시 표시 */
+  /* 배너 렌더 보장 + off-screen 표시 */
   rb();
   var bp = eid('banner-page');
   var bpHidden = bp && bp.style.display === 'none';
-  if(bpHidden){ bp.style.cssText = 'display:block; position:fixed; top:-20000px; left:0; width:1200px;'; }
+  if(bpHidden){ bp.style.cssText = 'display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
 
   function tick(){
     if(++done < tasks.length) return;
-    /* 복원 */
     if(bpHidden && bp) bp.style.cssText = 'display:none;';
     ch.postMessage({type:'done'});
     showToast('미리보기 전송 완료');
   }
 
-  /* 배너 4종 캡처 */
+  /* 배너 4종 (10초 타임아웃) */
   TYPES.forEach(function(t){
     var stage = eid('bn-stage-'+t);
     if(!stage || stage.offsetWidth === 0) return;
     tasks.push(
-      html2canvas(stage, opts)
+      _h2c(stage, opts, 10000)
         .then(function(c){ ch.postMessage({type:'banner', btype:t, label:LABELS[t], src:c.toDataURL('image/png')}); tick(); })
         .catch(function(e){ console.error('배너 캡처:', t, e); tick(); })
     );
   });
 
-  /* 안내문 캡처 */
+  /* 안내문 (25초 타임아웃) */
   var gr = eid('guide-root');
   if(gr){
     tasks.push(
-      html2canvas(gr, opts)
+      _h2c(gr, opts, 25000)
         .then(function(c){ ch.postMessage({type:'guide', src:c.toDataURL('image/png')}); tick(); })
-        .catch(function(e){ console.error('안내문 캡처:', e); tick(); })
+        .catch(function(e){
+          console.error('안내문 캡처:', e);
+          /* 타임아웃/오류 시 빈 상태로 done 전송 */
+          ch.postMessage({type:'guide-error'});
+          tick();
+        })
     );
   }
 
@@ -4122,6 +4149,9 @@ function initPreviewMode(){
   var pvImgs = {};
   var ch = new BroadcastChannel('sb_preview_ch');
 
+  /* 핸드셰이크: 에디터 탭에 준비 완료 신호 전송 */
+  ch.postMessage({type:'ready'});
+
   ch.onmessage = function(e){
     var d = e.data;
     var key = d.type === 'guide' ? 'guide' : d.btype;
@@ -4132,6 +4162,10 @@ function initPreviewMode(){
       var img = document.createElement('img');
       img.src = d.src; img.className = 'pv-img';
       s.wrap.appendChild(img);
+    } else if(d.type === 'guide-error'){
+      /* 안내문 캡처 실패 */
+      var slot = eid('pvsl-guide');
+      if(slot) slot.innerHTML = '<span style="color:#EF4444">⚠️ 안내문 캡처 실패<br><small style="font-weight:400;font-size:11px">미리보기를 다시 눌러주세요</small></span>';
     } else if(d.type === 'done'){
       /* 수신 못 한 slot 숨기기 */
       ORDER.forEach(function(o){ if(!pvImgs[o.key]) slotMap[o.key].wrap.style.display='none'; });
@@ -4139,15 +4173,15 @@ function initPreviewMode(){
     }
   };
 
-  /* 타임아웃: 35초 후에도 아무것도 안 오면 안내 메시지 */
+  /* 타임아웃: 40초 후에도 아무것도 안 오면 안내 메시지 */
   setTimeout(function(){
     if(!Object.keys(pvImgs).length){
       ORDER.forEach(function(o){
         var slot = eid('pvsl-'+o.key);
-        if(slot) slot.innerHTML = '<span>⚠️ 수신 대기 중…<br><small style="font-weight:400;font-size:11px">에디터 탭에서 미리보기를 다시 눌러주세요</small></span>';
+        if(slot) slot.innerHTML = '<span>⚠️ 수신 실패<br><small style="font-weight:400;font-size:11px">에디터 탭에서 미리보기를 다시 눌러주세요</small></span>';
       });
     }
-  }, 35000);
+  }, 40000);
 
   return true;
 }
