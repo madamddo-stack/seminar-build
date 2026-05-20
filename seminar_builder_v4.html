@@ -582,6 +582,28 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
    미리보기 모드
 ══════════════════════════════════════════ */
 
+/* 미리보기 헤더 */
+#preview-header{
+  display:none; position:fixed; top:0; left:0; right:0; z-index:9000;
+  height:52px; background:#fff; border-bottom:1px solid #E5E7EB;
+  align-items:center; justify-content:space-between; padding:0 24px; gap:12px;
+}
+body.preview-mode #preview-header{ display:flex; }
+.ph-left{ display:flex; align-items:center; gap:10px; }
+.ph-logo{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; }
+.ph-logo img{ height:18px; width:auto; }
+.ph-title{ font-size:14px; font-weight:700; color:#111; }
+.ph-right{ display:flex; align-items:center; gap:8px; }
+.ph-btn{
+  background:#fff; border:1px solid #E5E7EB; border-radius:8px;
+  padding:6px 14px; font-size:13px; font-weight:600; color:#374151;
+  cursor:pointer; transition:all .15s; font-family:inherit;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.ph-btn:hover{ background:#F9FAFB; border-color:#D1D5DB; }
+.ph-btn-dark{ background:#131927; color:#fff; border-color:#131927; }
+.ph-btn-dark:hover{ background:#2d3748; border-color:#2d3748; }
+
 /* Preview mode: 에디터 UI 숨기기 */
 body.preview-mode #topbar,
 body.preview-mode #left-rail,
@@ -593,20 +615,25 @@ body.preview-mode,
 body.preview-mode #app{ height:auto!important; overflow:visible!important; }
 
 body.preview-mode #main-area{
-  display:block!important; height:auto!important; overflow:visible!important; padding-top:0;
+  display:block!important; height:auto!important; overflow:visible!important; padding-top:52px;
 }
 body.preview-mode #canvas-area{
   display:block!important; height:auto!important; overflow:visible!important;
   background:#F3F4F6; padding:48px 32px 80px; align-items:unset;
 }
 body.preview-mode #guide-page{
-  display:flex!important; justify-content:center;
-  margin-bottom:60px;
+  display:flex!important; justify-content:center; margin-bottom:64px;
 }
 body.preview-mode #banner-page{
-  display:block!important; background:transparent;
-  max-width:1000px; margin:0 auto;
+  display:block!important; background:transparent; max-width:1000px; margin:0 auto;
 }
+body.preview-mode .bn-preview-area{ background:transparent; padding:0; }
+body.preview-mode .bn-all-wrap{ gap:40px; }
+/* 배너 블록 — 헤더는 레이블만 노출, 버튼 숨김 */
+body.preview-mode .bn-block-head{ display:flex!important; padding:0 0 8px; border:none; background:none; }
+body.preview-mode .bn-block-btns{ display:none!important; }
+body.preview-mode .bn-block-name{ font-size:13px; font-weight:700; color:#6B7280; letter-spacing:.04em; }
+body.preview-mode .bn-block-size{ font-size:11px; }
 /* 편집 컨트롤 모두 숨김 */
 body.preview-mode .add-row-area,
 body.preview-mode .row-ctrl,
@@ -614,13 +641,12 @@ body.preview-mode .tit-ctrl,
 body.preview-mode .img-overlay,
 body.preview-mode .chk-add-area,
 body.preview-mode .chk-del-btn,
-body.preview-mode .ov-type-bar{ display:none!important; }
+body.preview-mode .ov-type-bar,
+body.preview-mode .bn-detail-toggle,
+body.preview-mode .bn-detail-body{ display:none!important; }
 body.preview-mode .ed{ outline:none!important; box-shadow:none!important; }
 body.preview-mode #edit-hint{ display:none!important; }
 #pv-guide-dl,#preview-bn-heading{ display:none!important; }
-
-/* Preview 모드에서 배너 블록 헤더(버튼) 숨김 */
-body.preview-mode .bn-block-head{ display:none!important; }
 
 /* ─── 파트너 로고 픽커 팝업 ─────────────── */
 #partner-picker{
@@ -2178,10 +2204,21 @@ body.preview-mode .bn-detail-body{ display:none!important; }
 </div><!-- /main-area -->
 </div><!-- /app -->
 
-<!-- 안내문 다운로드 바 (preview mode) -->
-<div id="pv-guide-dl"></div>
-<!-- 배너 섹션 레이블 -->
-<div id="preview-bn-heading"></div>
+<!-- 미리보기 헤더 -->
+<div id="preview-header">
+  <div class="ph-left">
+    <div class="ph-logo"><img src="img/bi_jk.svg" alt="잡코리아"></div>
+    <span class="ph-title">세미나 미리보기</span>
+  </div>
+  <div class="ph-right">
+    <button class="ph-btn" onclick="dlGuidePng()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
+    <button class="ph-btn ph-btn-dark" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
+  </div>
+</div>
+<!-- 안내문 다운로드 바 (legacy placeholder) -->
+<div id="pv-guide-dl" style="display:none!important"></div>
+<!-- 배너 섹션 레이블 (legacy placeholder) -->
+<div id="preview-bn-heading" style="display:none!important"></div>
 
 <!-- 파트너 로고 픽커 팝업 -->
 <div id="partner-picker">
