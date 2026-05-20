@@ -4008,7 +4008,7 @@ function applyPreviewState(s){
     var el=eid(id); if(el&&s.html[id]!==undefined) el.innerHTML=s.html[id];
   });
   /* 상세 행 복원 */
-  if(s.detHtml){ var dr=eid('det-rows'); if(dr){ dr.innerHTML=s.detHtml; dr.querySelectorAll('.ed').forEach(bindEdEl); } }
+  if(s.detHtml !== undefined){ var dr=eid('det-rows'); if(dr){ dr.innerHTML=s.detHtml; dr.querySelectorAll('.ed').forEach(bindEdEl); dr.querySelectorAll('.det-row-wrap').forEach(bindDrag); } }
   /* 개요 복원 */
   if(s.ovListHtml){ var ol=eid('ov-list'); if(ol){ ol.innerHTML=s.ovListHtml; ol.querySelectorAll('.ed').forEach(bindEdEl); } }
   if(s.ovProseHtml){ var op=eid('ov-prose'); if(op){ op.innerHTML=s.ovProseHtml; op.querySelectorAll('.ed').forEach(bindEdEl); } }
@@ -4155,7 +4155,16 @@ function saveDraft(){
   var state = collectHistState();
   state._isDraft = true;
   state.date = new Date().toLocaleString('ko-KR');
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+  try{
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+  }catch(e){
+    /* QuotaExceeded: 이미지 제외 후 재시도 */
+    try{
+      state.illustSrc = '';
+      state.bnImgSrc  = '';
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+    }catch(e2){ /* 저장 실패 시 무시 */ }
+  }
   showAutoSaveIndicator();
 }
 
@@ -4270,11 +4279,25 @@ function collectHistState(){
 
 function saveHistory(){
   var state = collectHistState();
+  /* 히스토리는 base64 이미지 제외 — 용량 절약 (이미지는 드래프트에만 보존) */
+  state.illustSrc = '';
+  state.bnImgSrc  = '';
   var list = loadHistList();
   list.unshift(state);
   if(list.length > 50) list = list.slice(0, 50);
-  localStorage.setItem(HIST_KEY, JSON.stringify(list));
-  showToast('✅ 히스토리에 저장됨');
+  try{
+    localStorage.setItem(HIST_KEY, JSON.stringify(list));
+    showToast('✅ 히스토리에 저장됨');
+  }catch(e){
+    /* QuotaExceededError 등: 오래된 항목 절반 제거 후 재시도 */
+    try{
+      list = list.slice(0, Math.ceil(list.length / 2));
+      localStorage.setItem(HIST_KEY, JSON.stringify(list));
+      showToast('✅ 저장됨 (오래된 항목 일부 삭제됨)');
+    }catch(e2){
+      showToast('⚠️ 저장 실패: 저장 공간 부족', true);
+    }
+  }
 }
 
 function loadHistList(){
