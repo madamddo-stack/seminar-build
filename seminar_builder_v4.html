@@ -3960,7 +3960,9 @@ function collectPreviewState(){
   return s;
 }
 
-/* ── 컨텍스트 저장 (탭에 따라 안내문/배너 구분) ── */
+/* ── 미리보기 데이터: 메모리에 보관 (localStorage 없음, 용량 제한 없음) ── */
+window._pvData = { guide: null, banners: {} };
+
 var _currentPage = 'guide'; /* switchPage에서 업데이트 */
 
 function saveCtx(){
@@ -3968,7 +3970,7 @@ function saveCtx(){
   else saveGuideCapture();
 }
 
-/* onclone 공통 옵션 */
+/* onclone 공통 옵션: 에디터 UI 제거 + 외부 CSS 차단 */
 function _h2cOpts(){
   return {
     scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
@@ -3986,7 +3988,7 @@ function _h2cOpts(){
   };
 }
 
-/* 안내문 저장: html2canvas → JPEG → localStorage */
+/* 안내문 저장: html2canvas → PNG Blob → 메모리 (용량 제한 없음) */
 function saveGuideCapture(){
   var btn = eid('btn-save-ctx');
   if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
@@ -3995,28 +3997,10 @@ function saveGuideCapture(){
   _h2c(gr, _h2cOpts(), 30000)
     .then(function(canvas){
       canvas.toBlob(function(blob){
-        var reader = new FileReader();
-        reader.onload = function(){
-          var data = JSON.stringify({src:reader.result, ts:Date.now()});
-          try{
-            localStorage.setItem('sb_guide_cap', data);
-            showToast('✅ 안내문 저장 완료');
-          }catch(e){
-            /* PNG 용량 초과 시 JPEG 폴백 */
-            canvas.toBlob(function(b2){
-              var r2 = new FileReader();
-              r2.onload = function(){
-                try{ localStorage.setItem('sb_guide_cap', JSON.stringify({src:r2.result, ts:Date.now()})); showToast('✅ 안내문 저장 완료 (JPEG)'); }
-                catch(e2){ showToast('저장 실패: 용량 초과', true); }
-                if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
-              };
-              r2.readAsDataURL(b2);
-            }, 'image/jpeg', 0.85);
-            return;
-          }
-          if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
-        };
-        reader.readAsDataURL(blob);
+        if(window._pvData.guide) URL.revokeObjectURL(window._pvData.guide.url);
+        window._pvData.guide = { url: URL.createObjectURL(blob), ts: Date.now() };
+        showToast('✅ 안내문 저장 완료');
+        if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
       }, 'image/png');
     })
     .catch(function(e){
@@ -4026,19 +4010,18 @@ function saveGuideCapture(){
     });
 }
 
-/* 배너 저장: html2canvas 4종 → JPEG → localStorage */
+/* 배너 저장: html2canvas 4종 → PNG Blob → 메모리 */
 function saveBannerCapture(){
   var btn = eid('btn-save-ctx');
   if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
-  rb(); /* 배너 렌더 보장 */
+  rb();
   var bp = eid('banner-page');
   var bpHidden = bp && bp.style.display==='none';
   if(bpHidden){ bp.style.cssText='display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
-  var TYPES = ['v200','v170','strip','news'];
-  var opts  = _h2cOpts();
-  var done  = 0; var total = 0;
-  var KEYS  = {v200:'sb_v200_cap',v170:'sb_v170_cap',strip:'sb_strip_cap',news:'sb_news_cap'};
-  var LABELS= {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
+  var TYPES  = ['v200','v170','strip','news'];
+  var LABELS = {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
+  var opts   = _h2cOpts();
+  var done   = 0; var total = 0;
   TYPES.forEach(function(t){ if(eid('bn-stage-'+t)) total++; });
   if(!total){
     if(bpHidden&&bp) bp.style.cssText='display:none;';
@@ -4057,29 +4040,24 @@ function saveBannerCapture(){
     _h2c(stage, opts, 15000)
       .then(function(canvas){
         canvas.toBlob(function(blob){
-          var reader = new FileReader();
-          reader.onload = function(){
-            try{ localStorage.setItem(KEYS[t], JSON.stringify({src:reader.result, ts:Date.now(), label:LABELS[t]})); }catch(e){}
-            tick();
-          };
-          reader.readAsDataURL(blob);
+          if(window._pvData.banners[t]) URL.revokeObjectURL(window._pvData.banners[t].url);
+          window._pvData.banners[t] = { url: URL.createObjectURL(blob), label: LABELS[t] };
+          tick();
         }, 'image/png');
       })
       .catch(function(e){ console.error('배너 캡처:',t,e); tick(); });
   });
 }
 
-/* ── 미리보기: localStorage 저장된 이미지를 새 탭에서 표시 ── */
+/* 미리보기: 저장된 데이터 있으면 새 탭 오픈 */
 function openPreview(){
-  /* 저장된 이미지가 하나도 없으면 안내 */
-  var hasGuide  = !!localStorage.getItem('sb_guide_cap');
-  var hasBanner = ['sb_v200_cap','sb_v170_cap','sb_strip_cap','sb_news_cap'].some(function(k){ return !!localStorage.getItem(k); });
+  var hasGuide  = !!(window._pvData.guide);
+  var hasBanner = Object.keys(window._pvData.banners).length > 0;
   if(!hasGuide && !hasBanner){
     showToast('먼저 안내문 또는 배너를 저장해주세요', true);
     return;
   }
-  var url = window.location.origin + window.location.pathname + '?mode=preview';
-  window.open(url, '_blank');
+  window.open(window.location.origin + window.location.pathname + '?mode=preview', '_blank');
 }
 
 /* html2canvas + 타임아웃 래퍼 */
@@ -4168,44 +4146,34 @@ function initPreviewMode(){
   if(!cont) return true;
   cont.innerHTML = '';
 
+  /* 에디터 탭(opener)의 메모리 데이터를 직접 참조 — localStorage 불필요 */
+  var pvData = (window.opener && window.opener._pvData) ? window.opener._pvData : {guide:null, banners:{}};
   var pvImgs = {};
 
   /* 안내문 */
-  try{
-    var g = JSON.parse(localStorage.getItem('sb_guide_cap')||'null');
-    if(g && g.src){
-      pvImgs.guide = g.src;
-      var wrap = document.createElement('div');
-      wrap.className = 'pv-img-wrap pv-img-guide';
-      var img = document.createElement('img');
-      img.src = g.src; img.className = 'pv-img';
-      wrap.appendChild(img);
-      cont.appendChild(wrap);
-    }
-  }catch(e){}
+  if(pvData.guide && pvData.guide.url){
+    pvImgs.guide = pvData.guide.url;
+    var wrap = document.createElement('div');
+    wrap.className = 'pv-img-wrap pv-img-guide';
+    var img = document.createElement('img');
+    img.src = pvData.guide.url; img.className = 'pv-img';
+    wrap.appendChild(img);
+    cont.appendChild(wrap);
+  }
 
-  /* 배너 4종 */
-  var BANNER_KEYS = [
-    {key:'sb_v200_cap', btype:'v200'},
-    {key:'sb_v170_cap', btype:'v170'},
-    {key:'sb_strip_cap',btype:'strip'},
-    {key:'sb_news_cap', btype:'news'}
-  ];
-  BANNER_KEYS.forEach(function(item){
-    try{
-      var b = JSON.parse(localStorage.getItem(item.key)||'null');
-      if(b && b.src){
-        pvImgs[item.btype] = b.src;
-        var wrap = document.createElement('div');
-        wrap.className = 'pv-img-wrap pv-img-banner';
-        var lbl = document.createElement('div');
-        lbl.className = 'pv-img-label'; lbl.textContent = b.label || item.btype;
-        var img = document.createElement('img');
-        img.src = b.src; img.className = 'pv-img';
-        wrap.appendChild(lbl); wrap.appendChild(img);
-        cont.appendChild(wrap);
-      }
-    }catch(e){}
+  /* 배너 4종 (순서 유지) */
+  ['v200','v170','strip','news'].forEach(function(t){
+    var b = pvData.banners[t];
+    if(!b || !b.url) return;
+    pvImgs[t] = b.url;
+    var wrap = document.createElement('div');
+    wrap.className = 'pv-img-wrap pv-img-banner';
+    var lbl = document.createElement('div');
+    lbl.className = 'pv-img-label'; lbl.textContent = b.label || t;
+    var img = document.createElement('img');
+    img.src = b.url; img.className = 'pv-img';
+    wrap.appendChild(lbl); wrap.appendChild(img);
+    cont.appendChild(wrap);
   });
 
   /* 아무것도 없으면 안내 */
