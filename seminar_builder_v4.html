@@ -602,6 +602,7 @@ body.preview-mode #preview-header{ display:flex; }
 .ph-btn:hover{ background:#F9FAFB; border-color:#D1D5DB; }
 .ph-btn-dark{ background:#131927; color:#fff; border-color:#131927; }
 .ph-btn-dark:hover{ background:#2d3748; border-color:#2d3748; }
+.ph-note{ font-size:12px; color:#9CA3AF; font-weight:500; }
 
 /* Preview mode: 에디터 UI 숨기기 */
 body.preview-mode #topbar,
@@ -2233,8 +2234,7 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <span class="ph-title">세미나 미리보기</span>
   </div>
   <div class="ph-right">
-    <button class="ph-btn" onclick="pvDlGuide()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
-    <button class="ph-btn ph-btn-dark" onclick="pvDlBanners()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
+    <span class="ph-note">고화질 저장은 에디터 다운로드 버튼을 이용하세요</span>
   </div>
 </div>
 <!-- 안내문 다운로드 바 (legacy placeholder) -->
@@ -3993,31 +3993,10 @@ function collectPreviewState(){
   return s;
 }
 
-/* 안내문 PNG 캡처 — 10MB 초과 시 scale 단계 축소 (PNG 포맷 유지, 화질 손실 없음)
-   scale 2 → 1.5 → 1 순으로 재시도 */
-function _captureGuide(el){
-  var MAX = 10 * 1024 * 1024; /* 10MB */
-  var scales = [2, 1.5, 1];
-
-  function tryScale(i){
-    var scale = scales[i];
-    var opts = {scale:scale, useCORS:true, allowTaint:true, logging:false};
-    return html2canvas(el, opts).then(function(canvas){
-      var png = canvas.toDataURL('image/png');
-      var bytes = Math.round(png.length * 0.75); /* base64 → 실제 바이트 근사 */
-      /* 10MB 이하이거나 마지막 scale이면 사용 */
-      if(bytes <= MAX || i === scales.length - 1){
-        return {k:'guide', png:png, scale:scale};
-      }
-      /* 초과면 다음 scale로 재시도 */
-      return tryScale(i + 1);
-    });
-  }
-  return tryScale(0);
-}
-
 /* ── 미리보기: 에디터에서 html2canvas 캡처 → localStorage 저장 → 짧은 키 URL ── */
-var _pvCapKey = null; /* 현재 캡처 키 (preview 탭의 다운로드에서 참조) */
+/* 미리보기는 화면 확인용 → scale:1 (빠름)
+   고화질 저장은 에디터 다운로드 버튼 사용 */
+var _pvCapKey = null;
 
 function openPreview(){
   var btn = eid('btn-preview');
@@ -4031,19 +4010,20 @@ function openPreview(){
   var bpWasHidden = bp && bp.style.display === 'none';
   if(bpWasHidden) bp.style.display = 'block';
 
-  var h2c2 = {scale:2, useCORS:true, allowTaint:true, logging:false};
+  /* scale:1 — 미리보기용 빠른 캡처 */
+  var h2c = {scale:1, useCORS:true, allowTaint:true, logging:false};
   var bannerTypes = ['v200','v170','strip','news'];
   var tasks = [];
 
-  /* 안내문 캡처 — 10MB 이내가 될 때까지 scale 단계적 축소 (PNG 유지, 화질 손실 없음) */
   var gr = eid('guide-root');
-  if(gr) tasks.push(_captureGuide(gr));
+  if(gr) tasks.push(
+    html2canvas(gr, h2c).then(function(c){ return {k:'guide', png:c.toDataURL('image/png')}; })
+  );
 
-  /* 배너 4종 캡처 */
   bannerTypes.forEach(function(t){
     var st = eid('bn-stage-'+t);
     if(st) tasks.push(
-      html2canvas(st, h2c2).then(function(c){ return {k:t, png:c.toDataURL('image/png')}; })
+      html2canvas(st, h2c).then(function(c){ return {k:t, png:c.toDataURL('image/png')}; })
     );
   });
 
