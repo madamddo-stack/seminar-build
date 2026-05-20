@@ -4092,10 +4092,9 @@ function _applyIllustSrc(src){
 function showPreviewLayout(){
   document.body.classList.add('preview-mode');
   var root=eid('guide-root'); if(root) root.classList.remove('ed-mode');
-  syncFromGuide();
-  var d=getBnData();
-  ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
   var bp=eid('banner-page'); if(bp) bp.style.display='block';
+  syncFromGuide();
+  rb(); /* 배너 4종 렌더 */
 }
 
 function renderPreviewImages(){
