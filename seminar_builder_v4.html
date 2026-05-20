@@ -724,22 +724,22 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 /* ─── 팔레트 바 ──────────────────────────── */
 .palette-bar{
   position:fixed;top:56px;left:0;right:0;z-index:8990;
-  height:32px;
+  height:22px;
   background:#fff;
   border-bottom:1px solid #E5E7EB;
   display:flex;align-items:center;
   padding:0 16px;
-  gap:6px;
+  gap:5px;
   overflow-x:auto;
   scrollbar-width:none;
 }
 .palette-bar::-webkit-scrollbar{display:none;}
 .pal-label{ display:none; }
-/* pill 형태 팔레트 스와치 */
+/* 가로 칩 팔레트 스와치 — bg 1.5 : title 1 : btn 1 */
 .pal-sw{
   display:flex;
-  width:60px;height:20px;
-  border-radius:100px;
+  width:56px;height:10px;
+  border-radius:4px;
   overflow:hidden;
   cursor:pointer;
   border:1.5px solid #D1D5DB;
@@ -749,8 +749,10 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 }
 .pal-sw:hover{ border-color:#9CA3AF; box-shadow:0 2px 6px rgba(0,0,0,.1); }
 .pal-sw.active{ border-color:#374151 !important; box-shadow:0 0 0 1.5px #374151; }
-/* 3분할 컬러 세그먼트 */
-.pal-seg{ flex:1; }
+/* 3분할 컬러 세그먼트: bg 1.5 / title 1 / btn 1 */
+.pal-seg-bg   { flex:1.5; }
+.pal-seg-title{ flex:1; }
+.pal-seg-btn  { flex:1; }
 /* 팔레트명 툴팁 */
 .pal-sw::after{
   content:attr(data-name);
@@ -2376,11 +2378,11 @@ function renderPaletteBar(){
     var sw = document.createElement('div');
     sw.className = 'pal-sw' + (i === 0 ? ' active' : '');
     sw.setAttribute('data-name', p.name);
-    /* 3분할: bg / title / main(텍스트) */
+    /* 3분할: bg 1.5 / title 1 / btn 1 */
     sw.innerHTML =
-      '<div class="pal-seg" style="background:'+p.bg+'"></div>'+
-      '<div class="pal-seg" style="background:'+(p.btn||p.live)+'"></div>'+
-      '<div class="pal-seg" style="background:'+p.main+'"></div>';
+      '<div class="pal-seg-bg"    style="background:'+p.bg+'"></div>'+
+      '<div class="pal-seg-title" style="background:'+p.title+'"></div>'+
+      '<div class="pal-seg-btn"   style="background:'+(p.btn||p.live)+'"></div>';
     sw.addEventListener('click', function(){ applyPalette(i); });
     bar.appendChild(sw);
   });
