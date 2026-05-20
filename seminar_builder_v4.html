@@ -4141,7 +4141,12 @@ function _applyIllustSrc(src){
   if(!ilImg) return;
   ilImg.src = src;
   ilImg.style.display = 'block';
-  var ilPh = eid('il-ph'); if(ilPh) ilPh.style.display = 'none';
+  /* 플레이스홀더 숨김 (id = il-placeholder) */
+  var ilPh = eid('il-placeholder'); if(ilPh) ilPh.style.display = 'none';
+  /* 이미지 영역 min-height 해제 */
+  var area = eid('illust-area'); if(area) area.style.minHeight = '';
+  /* 사이즈 컨트롤 패널 표시 */
+  document.querySelectorAll('.illust-ctrl-sec').forEach(function(el){ el.classList.add('visible'); });
 }
 
 function showPreviewLayout(){
