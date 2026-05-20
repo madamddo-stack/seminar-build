@@ -231,18 +231,19 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .il-reupload:hover{ border-color:#9CA3AF;color:var(--text-pri);background:var(--bg-rail); }
 
 /* 팔레트 그리드 */
-#palette-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+#palette-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
 .pg-item{
-  border-radius:8px;border:2px solid transparent;
-  overflow:hidden;cursor:pointer;transition:border-color .15s,transform .1s;
+  border-radius:6px;border:2px solid transparent;
+  overflow:hidden;cursor:pointer;transition:border-color .15s;
 }
-.pg-item:hover{border-color:#D2D5DB;transform:translateY(-1px);}
+.pg-item:hover{border-color:#D2D5DB;}
 .pg-item.pg-active{border-color:#131927;}
-.pg-bg{height:28px;}
-.pg-row{display:flex;height:10px;}
-.pg-t{flex:1;}
-.pg-b{flex:1;}
-.pg-name{font-size:12px;font-weight:600;color:var(--text-sec);padding:3px 6px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;}
+/* 가로 칩: bg 1.5 / title 1 / btn 1 */
+.pg-chip{display:flex;height:14px;}
+.pg-seg-bg   {flex:1.5;}
+.pg-seg-title{flex:1;}
+.pg-seg-btn  {flex:1;}
+.pg-name{font-size:11px;font-weight:600;color:var(--text-sec);padding:2px 5px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;}
 
 /* INSPECT */
 .ins-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -2396,11 +2397,12 @@ function renderPaletteGrid(){
     var item = document.createElement('div');
     item.className = 'pg-item' + (i === _activePalIdx ? ' pg-active' : '');
     item.title = p.name;
+    /* 가로 칩: bg 1.5 / title 1 / btn 1 */
     item.innerHTML =
-      '<div class="pg-bg" style="background:'+p.bg+'"></div>'+
-      '<div class="pg-row">'+
-        '<div class="pg-t" style="background:'+p.title+'"></div>'+
-        '<div class="pg-b" style="background:'+(p.btn||p.live)+'"></div>'+
+      '<div class="pg-chip">'+
+        '<div class="pg-seg-bg"    style="background:'+p.bg+'"></div>'+
+        '<div class="pg-seg-title" style="background:'+p.title+'"></div>'+
+        '<div class="pg-seg-btn"   style="background:'+(p.btn||p.live)+'"></div>'+
       '</div>'+
       '<div class="pg-name">'+p.name+'</div>';
     item.addEventListener('click', function(){ applyPalette(i); });
