@@ -3983,14 +3983,10 @@ function collectPreviewState(){
     });
     var tv=eid('tov-'+t); if(tv&&tv.value) s.bnf['tov-'+t]=tv.value;
   });
-  /* 이미지: URL 해시가 너무 커지므로 localStorage에 별도 보관 후 키만 포함 */
-  var pvImgKey = 'sb_pv_img_'+Date.now();
+  /* 이미지: state에 직접 포함 (pvImgKey 방식 폐기 — QuotaExceeded 시 pvImgKey가 미설정되어 복원 불가) */
   var ilImg = eid('il-img');
-  var imgStore = {
-    illustSrc: (ilImg && ilImg.src && ilImg.style.display!=='none') ? ilImg.src : '',
-    bnImgSrc:  _bnImgSrc || ''
-  };
-  try{ localStorage.setItem(pvImgKey, JSON.stringify(imgStore)); s.pvImgKey = pvImgKey; }catch(e){}
+  s.illustSrc = (ilImg && ilImg.src && ilImg.style.display!=='none') ? ilImg.src : '';
+  s.bnImgSrc  = _bnImgSrc || '';
   return s;
 }
 
@@ -4059,17 +4055,9 @@ function applyPreviewState(s){
   }
   /* 배너 필드 */
   if(s.bnf) Object.keys(s.bnf).forEach(function(id){ var el=eid(id); if(el&&el.tagName) el.value=s.bnf[id]; });
-  /* 이미지 복원 — 직접 저장된 경우 */
+  /* 이미지 복원 */
   if(s.illustSrc){ _applyIllustSrc(s.illustSrc); }
   if(s.bnImgSrc)  { setBnImg(s.bnImgSrc); }
-  /* 이미지 복원 — 미리보기 URL: localStorage에 저장된 키 참조 */
-  if(s.pvImgKey){
-    try{
-      var imgs = JSON.parse(localStorage.getItem(s.pvImgKey)||'{}');
-      if(imgs.illustSrc) _applyIllustSrc(imgs.illustSrc);
-      if(imgs.bnImgSrc)  setBnImg(imgs.bnImgSrc);
-    }catch(e){}
-  }
   /* inspect 패널 최신화 */
   updateInspect();
 }
