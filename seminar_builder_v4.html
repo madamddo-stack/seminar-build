@@ -239,7 +239,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .pg-item:hover{border-color:#D2D5DB;}
 .pg-item.pg-active{border-color:#131927;}
 /* 가로 칩: bg 1.5 / title 1 / btn 1 */
-.pg-chip{display:flex;height:14px;}
+.pg-chip{display:flex;height:28px;}
 .pg-seg-bg   {flex:1.5;}
 .pg-seg-title{flex:1;}
 .pg-seg-btn  {flex:1;}
@@ -2242,13 +2242,6 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     </button>
   </div>
 
-  <!-- 사용 가이드 힌트 -->
-  <div id="edit-hint">
-    <div class="hint-title">How to use</div>
-    <div class="hint-row"><span class="hint-icon mi mi-sm">edit</span><span class="hint-txt">텍스트 클릭 → 바로 수정</span></div>
-    <div class="hint-row"><span class="hint-icon mi mi-sm">image</span><span class="hint-txt">이미지 위 호버 → 파일 업로드</span></div>
-    <div class="hint-row"><span class="hint-icon mi mi-sm">file_download</span><span class="hint-txt">PNG 저장 → 고해상도 내보내기</span></div>
-  </div>
 </aside>
 
 </div><!-- /main-area -->
@@ -4258,8 +4251,6 @@ initSizeCtrl();
 initFmtBar();
 /* 배너는 탭 전환 시 rb() 호출로 렌더됨 */
 
-setTimeout(function(){ var h=eid('edit-hint'); if(h) h.style.opacity='0.2'; }, 7000);
-setTimeout(function(){ var h=eid('edit-hint'); if(h) h.style.display='none'; }, 13000);
 
 /* ══════════════════════════════
    히스토리
