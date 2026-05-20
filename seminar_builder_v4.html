@@ -604,72 +604,38 @@ body.preview-mode #preview-header{ display:flex; }
 .ph-btn-dark:hover{ background:#2d3748; border-color:#2d3748; }
 .ph-note{ font-size:12px; color:#9CA3AF; font-weight:500; }
 
-/* Preview mode: 에디터 UI 숨기기 */
-body.preview-mode #topbar,
-body.preview-mode #left-rail,
-body.preview-mode #side-panel,
-body.preview-mode #right-panel{ display:none!important; }
-
-/* Preview mode: 스크롤 허용 */
-body.preview-mode,
-body.preview-mode #app{ height:auto!important; overflow:visible!important; }
-
-body.preview-mode #main-area{
-  display:block!important; height:auto!important; overflow:visible!important; padding-top:52px;
-}
-body.preview-mode #canvas-area{
-  display:block!important; height:auto!important; overflow:visible!important;
-  background:#F3F4F6; padding:48px 32px 80px; align-items:unset;
-}
-body.preview-mode #guide-page{
-  display:flex!important; justify-content:center; margin-bottom:64px;
-}
-body.preview-mode #banner-page{
-  display:block!important; background:transparent; max-width:1000px; margin:0 auto;
-}
-body.preview-mode .bn-preview-area{ background:transparent; padding:0; }
-body.preview-mode .bn-all-wrap{ gap:40px; }
-/* 배너 블록 — 헤더는 레이블만 노출, 버튼 숨김 */
-body.preview-mode .bn-block-head{ display:flex!important; padding:0 0 8px; border:none; background:none; }
-body.preview-mode .bn-block-btns{ display:none!important; }
-body.preview-mode .bn-block-name{ font-size:13px; font-weight:700; color:#6B7280; letter-spacing:.04em; }
-body.preview-mode .bn-block-size{ font-size:11px; }
-/* 편집 컨트롤 모두 숨김 */
-body.preview-mode .add-row-area,
-body.preview-mode .row-ctrl,
-body.preview-mode .tit-ctrl,
-body.preview-mode .img-overlay,
-body.preview-mode .chk-add-area,
-body.preview-mode .chk-del-btn,
-body.preview-mode .ov-type-bar,
-body.preview-mode .bn-detail-toggle,
-body.preview-mode .bn-detail-body{ display:none!important; }
-body.preview-mode .ed{ outline:none!important; box-shadow:none!important; }
-body.preview-mode #edit-hint{ display:none!important; }
+/* ── Preview mode ─────────────────────────────── */
+/* 에디터 앱 전체 숨기고 pv-image-container만 표시  */
+body.preview-mode #app{ display:none!important; }
+body.preview-mode{ height:auto!important; overflow-y:auto!important; background:#F3F4F6; }
 #pv-guide-dl,#preview-bn-heading{ display:none!important; }
 
 /* 미리보기 이미지 컨테이너 */
 #pv-image-container{
   display:none; flex-direction:column; align-items:center; gap:56px;
-  max-width:1000px; margin:0 auto; padding-bottom:80px;
+  padding:100px 32px 80px; min-height:100vh; background:#F3F4F6;
 }
 body.preview-mode #pv-image-container{ display:flex; }
-.pv-capturing{
-  font-size:14px; font-weight:600; color:#9CA3AF;
-  padding:80px 0; text-align:center;
-}
-.pv-img-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%; }
-.pv-img-guide{ align-items:center; }
+.pv-img-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%; max-width:960px; }
+.pv-img-guide{ align-items:center; max-width:900px; }
 .pv-img-banner{ align-items:flex-start; }
 .pv-img-label{
   font-size:12px; font-weight:700; color:#9CA3AF;
   letter-spacing:.06em; text-transform:uppercase;
 }
 .pv-img{ display:block; max-width:100%; box-shadow:0 4px 24px rgba(0,0,0,.12); }
-
-/* 이미지 준비 완료 시 원본 DOM 숨김 */
-body.pv-images-ready #guide-page,
-body.pv-images-ready #banner-page{ display:none!important; }
+/* slot 로딩 플레이스홀더 */
+.pv-slot-loading{
+  width:100%; min-height:180px; display:flex; align-items:center; justify-content:center;
+  background:#EAECF0; border-radius:8px; color:#9CA3AF; font-size:13px; font-weight:600;
+  flex-direction:column; gap:12px;
+}
+.pv-spinner{
+  width:28px; height:28px; border:3px solid #D1D5DB;
+  border-top-color:#6B7280; border-radius:50%;
+  animation:pv-spin .8s linear infinite;
+}
+@keyframes pv-spin{ to{ transform:rotate(360deg); } }
 
 /* ─── 파트너 로고 픽커 팝업 ─────────────── */
 #partner-picker{
@@ -2234,8 +2200,8 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <span class="ph-title">세미나 미리보기</span>
   </div>
   <div class="ph-right">
-    <button class="ph-btn" onclick="dlGuidePng()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
-    <button class="ph-btn ph-btn-dark" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
+    <button class="ph-btn" id="ph-btn-guide" onclick="showToast('이미지 준비 중…')"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
+    <button class="ph-btn ph-btn-dark" id="ph-btn-banner" onclick="showToast('이미지 준비 중…')"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
   </div>
 </div>
 <!-- 안내문 다운로드 바 (legacy placeholder) -->
@@ -3990,28 +3956,64 @@ function collectPreviewState(){
   return s;
 }
 
-/* ── 미리보기: 상태(이미지 포함) localStorage 저장 → 즉시 새 탭 오픈 ── */
-var _pvCapKey = null;
-
+/* ── 미리보기: BroadcastChannel — 에디터 탭 캡처 → 미리보기 탭 전송 ── */
 function openPreview(){
-  var state = collectPreviewState(); /* illustSrc, bnImgSrc 포함 */
-  var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-  var saved = false;
-  try{
-    localStorage.setItem('sb_pvcap_'+key, JSON.stringify(state));
-    saved = true;
-  }catch(e){
-    /* QuotaExceeded: 이미지 제외 후 재시도 */
-    try{
-      state.illustSrc = '';
-      state.bnImgSrc  = '';
-      localStorage.setItem('sb_pvcap_'+key, JSON.stringify(state));
-      saved = true;
-    }catch(e2){}
-  }
-  if(!saved){ showToast('저장 공간 부족', true); return; }
-  var url = window.location.origin+window.location.pathname+'?mode=preview&k='+key;
+  if(!('BroadcastChannel' in window)){ showToast('이 브라우저는 미리보기를 지원하지 않습니다.', true); return; }
+  var ch = new BroadcastChannel('sb_preview_ch');
+  var url = window.location.origin + window.location.pathname + '?mode=preview';
   window.open(url, '_blank');
+  showToast('미리보기 탭 준비 중…');
+  /* 900ms: 새 탭 DOM 로드 대기 후 캡처 시작 */
+  setTimeout(function(){ _captureForPreview(ch); }, 900);
+}
+
+function _captureForPreview(ch){
+  var LABELS = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
+  var TYPES  = ['v200','v170','strip','news'];
+  /* scale:1 — 미리보기용 (속도 우선); imageTimeout:4000 — CDN 폰트 타임아웃 단축 */
+  var opts   = {scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:4000};
+  var tasks  = [];
+  var done   = 0;
+
+  /* 배너 렌더 보장 + 숨겨진 경우 off-screen으로 잠시 표시 */
+  rb();
+  var bp = eid('banner-page');
+  var bpHidden = bp && bp.style.display === 'none';
+  if(bpHidden){ bp.style.cssText = 'display:block; position:fixed; top:-20000px; left:0; width:1200px;'; }
+
+  function tick(){
+    if(++done < tasks.length) return;
+    /* 복원 */
+    if(bpHidden && bp) bp.style.cssText = 'display:none;';
+    ch.postMessage({type:'done'});
+    showToast('미리보기 전송 완료');
+  }
+
+  /* 배너 4종 캡처 */
+  TYPES.forEach(function(t){
+    var stage = eid('bn-stage-'+t);
+    if(!stage || stage.offsetWidth === 0) return;
+    tasks.push(
+      html2canvas(stage, opts)
+        .then(function(c){ ch.postMessage({type:'banner', btype:t, label:LABELS[t], src:c.toDataURL('image/png')}); tick(); })
+        .catch(function(e){ console.error('배너 캡처:', t, e); tick(); })
+    );
+  });
+
+  /* 안내문 캡처 */
+  var gr = eid('guide-root');
+  if(gr){
+    tasks.push(
+      html2canvas(gr, opts)
+        .then(function(c){ ch.postMessage({type:'guide', src:c.toDataURL('image/png')}); tick(); })
+        .catch(function(e){ console.error('안내문 캡처:', e); tick(); })
+    );
+  }
+
+  if(!tasks.length){
+    if(bpHidden && bp) bp.style.cssText = 'display:none;';
+    ch.postMessage({type:'done'});
+  }
 }
 
 function applyPreviewState(s){
@@ -4079,84 +4081,107 @@ function _applyIllustSrc(src){
 
 function showPreviewLayout(){
   document.body.classList.add('preview-mode');
-  var root=eid('guide-root'); if(root) root.classList.remove('ed-mode');
-  var bp=eid('banner-page'); if(bp) bp.style.display='block';
-  syncFromGuide();
-  rb(); /* 배너 4종 렌더 */
-}
-
-function renderPreviewImages(){
-  var cont = eid('pv-image-container');
-  if(!cont) return;
-
-  /* 로딩 표시 */
-  cont.innerHTML = '<div class="pv-capturing">이미지 생성 중…</div>';
-  cont.style.display = 'block';
-
-  var h2cBase = {scale:2, useCORS:true, allowTaint:true, backgroundColor:null, logging:false};
-  var bannerTypes = ['v200','v170','strip','news'];
-  var bannerLabels = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
-
-  var tasks = [];
-
-  /* 안내문 캡처 */
-  var gr = eid('guide-root');
-  if(gr) tasks.push(html2canvas(gr, h2cBase).then(function(c){ return {type:'guide', canvas:c}; }));
-
-  /* 배너 4종 캡처 */
-  bannerTypes.forEach(function(t){
-    var stage = eid('bn-stage-'+t);
-    if(stage && stage.offsetWidth > 0){
-      tasks.push(html2canvas(stage, Object.assign({}, h2cBase, {scale:1}))
-        .then(function(c){ return {type:t, canvas:c}; }));
-    }
-  });
-
-  Promise.all(tasks).then(function(results){
-    cont.innerHTML = '';
-    results.forEach(function(r){
-      var wrap = document.createElement('div');
-      wrap.className = 'pv-img-wrap' + (r.type==='guide' ? ' pv-img-guide' : ' pv-img-banner');
-
-      if(r.type !== 'guide'){
-        var lbl = document.createElement('div');
-        lbl.className = 'pv-img-label';
-        lbl.textContent = bannerLabels[r.type] || r.type;
-        wrap.appendChild(lbl);
-      }
-
-      var img = document.createElement('img');
-      img.src = r.canvas.toDataURL('image/png');
-      img.className = 'pv-img';
-      wrap.appendChild(img);
-      cont.appendChild(wrap);
-    });
-
-    /* 원본 DOM 숨김 */
-    document.body.classList.add('pv-images-ready');
-  }).catch(function(e){
-    console.error('renderPreviewImages error:', e);
-    cont.style.display = 'none';
-  });
+  /* BroadcastChannel 방식: 에디터 탭에서 캡처 전송 — 이 탭은 수신만 */
 }
 
 function initPreviewMode(){
   var params = new URLSearchParams(window.location.search);
   if(params.get('mode') !== 'preview') return false;
 
-  var k = params.get('k');
-  if(k){
-    try{
-      var s = JSON.parse(localStorage.getItem('sb_pvcap_'+k)||'null');
-      if(s) applyPreviewState(s);
-    }catch(e){ console.error('Preview load error:', e); }
-  }
-
   showPreviewLayout();
+
+  var cont = eid('pv-image-container');
+  if(!cont) return true;
+
+  /* 순서 고정 slot 생성 (안내문 → 배너 4종) */
+  var ORDER = [
+    {key:'guide', label:'안내문',                     cls:'pv-img-guide', isGuide:true},
+    {key:'v200',  label:'기업라운지 좌측 · 200×275',   cls:'pv-img-banner', isGuide:false},
+    {key:'v170',  label:'기업검색 좌측 · 170×235',     cls:'pv-img-banner', isGuide:false},
+    {key:'strip', label:'기업라운지 띠 · 940×80',      cls:'pv-img-banner', isGuide:false},
+    {key:'news',  label:'뉴스레터 · 535×274',          cls:'pv-img-banner', isGuide:false}
+  ];
+  cont.innerHTML = '';
+  var slotMap = {};
+  ORDER.forEach(function(o){
+    var wrap = document.createElement('div');
+    wrap.className = 'pv-img-wrap ' + o.cls;
+    if(!o.isGuide){
+      var lbl = document.createElement('div');
+      lbl.className = 'pv-img-label'; lbl.textContent = o.label;
+      wrap.appendChild(lbl);
+    }
+    var slot = document.createElement('div');
+    slot.className = 'pv-slot-loading'; slot.id = 'pvsl-'+o.key;
+    slot.innerHTML = '<div class="pv-spinner"></div><span>' + (o.isGuide ? '안내문' : o.label) + ' 수신 중…</span>';
+    wrap.appendChild(slot);
+    cont.appendChild(wrap);
+    slotMap[o.key] = {wrap:wrap, slot:slot};
+  });
+
+  var pvImgs = {};
+  var ch = new BroadcastChannel('sb_preview_ch');
+
+  ch.onmessage = function(e){
+    var d = e.data;
+    var key = d.type === 'guide' ? 'guide' : d.btype;
+    if((d.type === 'guide' || d.type === 'banner') && slotMap[key]){
+      pvImgs[key] = d.src;
+      var s = slotMap[key];
+      s.slot.remove();
+      var img = document.createElement('img');
+      img.src = d.src; img.className = 'pv-img';
+      s.wrap.appendChild(img);
+    } else if(d.type === 'done'){
+      /* 수신 못 한 slot 숨기기 */
+      ORDER.forEach(function(o){ if(!pvImgs[o.key]) slotMap[o.key].wrap.style.display='none'; });
+      _pvSetupDownloads(pvImgs);
+    }
+  };
+
+  /* 타임아웃: 35초 후에도 아무것도 안 오면 안내 메시지 */
+  setTimeout(function(){
+    if(!Object.keys(pvImgs).length){
+      ORDER.forEach(function(o){
+        var slot = eid('pvsl-'+o.key);
+        if(slot) slot.innerHTML = '<span>⚠️ 수신 대기 중…<br><small style="font-weight:400;font-size:11px">에디터 탭에서 미리보기를 다시 눌러주세요</small></span>';
+      });
+    }
+  }, 35000);
+
   return true;
 }
 
-var _pvCapData = null; /* 다운로드용 캡처 데이터 */
+function _pvSetupDownloads(pvImgs){
+  var date = new Date().toISOString().slice(0,10);
+  var btnGuide  = eid('ph-btn-guide');
+  var btnBanner = eid('ph-btn-banner');
+  if(btnGuide && pvImgs.guide){
+    btnGuide.onclick = function(){
+      var a = document.createElement('a');
+      a.href = pvImgs.guide; a.download = 'seminar_guide_'+date+'.png';
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+  }
+  if(btnBanner){
+    var items = [
+      {key:'v200',  name:'기업라운지좌측_200x275_'+date+'.png'},
+      {key:'v170',  name:'기업검색좌측_170x235_'+date+'.png'},
+      {key:'strip', name:'jk_pc_기업라운지띠_940X80_'+date+'.png'},
+      {key:'news',  name:'뉴스레터_535x274_'+date+'.png'}
+    ];
+    btnBanner.onclick = function(){
+      items.forEach(function(it, i){
+        if(!pvImgs[it.key]) return;
+        setTimeout(function(){
+          var a = document.createElement('a');
+          a.href = pvImgs[it.key]; a.download = it.name;
+          document.body.appendChild(a); a.click(); a.remove();
+        }, i * 350);
+      });
+    };
+  }
+}
 
 
 
