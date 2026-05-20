@@ -4101,39 +4101,28 @@ function initPreviewMode(){
   var params = new URLSearchParams(window.location.search);
   if(params.get('mode') !== 'preview') return false;
 
-  /* 연월일시분초 키 방식 */
-  var k = params.get('k');
-  if(k){
-    try{
-      var s = JSON.parse(localStorage.getItem('sb_pv_'+k)||'null');
-      if(s){ applyPreviewState(s); showPreviewLayout(); return true; }
-    }catch(e){}
-    showToast('미리보기 데이터를 찾을 수 없습니다', true);
-    return true;
-  }
-
-  /* LZString 압축 해시 방식 (#lz:<compressed>) */
+  /* 상태 복원 시도 (실패해도 레이아웃은 반드시 전환) */
   var hash = window.location.hash.slice(1);
+
   if(hash.startsWith('lz:')){
+    /* LZString 압축 해시 방식 */
     try{
       var json = (typeof LZString !== 'undefined')
         ? LZString.decompressFromEncodedURIComponent(hash.slice(3))
-        : decodeURIComponent(escape(atob(hash.slice(3))));
-      var s = JSON.parse(json);
-      applyPreviewState(s);
-      showPreviewLayout();
-      return true;
-    }catch(e){ console.error('LZ decode error:', e); showToast('미리보기 데이터 복원 실패', true); return false; }
+        : null;
+      if(json){ var s = JSON.parse(json); if(s) applyPreviewState(s); }
+    }catch(e){ console.error('LZ decode error:', e); }
+  } else if(hash){
+    /* 레거시: base64 방식 */
+    try{
+      var s = JSON.parse(decodeURIComponent(escape(atob(hash))));
+      if(s) applyPreviewState(s);
+    }catch(e){ console.error('Preview decode error:', e); }
   }
 
-  /* 레거시: URL 해시(base64) 방식 */
-  if(!hash) return false;
-  try{
-    var s = JSON.parse(decodeURIComponent(escape(atob(hash))));
-    applyPreviewState(s);
-    showPreviewLayout();
-    return true;
-  }catch(e){ console.error('Preview decode error:', e); return false; }
+  /* 레이아웃 전환은 항상 실행 */
+  showPreviewLayout();
+  return true;
 }
 
 
@@ -4421,6 +4410,9 @@ function clearHistory(){
 
 /* ── 자동저장 이벤트 위임 초기화 ─────────────── */
 (function initAutoSave(){
+  /* 미리보기 모드면 에디터 초기화 스킵하고 바로 레이아웃 전환 */
+  if(initPreviewMode()) return;
+
   /* main-area 내 모든 input/textarea/select 변경 감지 */
   var area = eid('main-area') || document.body;
   area.addEventListener('input',  function(){ scheduleAutoSave(); }, true);
@@ -4437,9 +4429,6 @@ function clearHistory(){
 
   /* 배너 이미지 컨트롤 UI 초기화 */
   initBnImgCtrls();
-
-  /* 미리보기 모드 체크 — URL에 ?mode=preview 있으면 미리보기 레이아웃으로 전환 */
-  initPreviewMode();
 
 })();
 </script>
