@@ -2440,8 +2440,7 @@ function applyPalette(idx){
   if(!p) return;
   applyBg(p.bg);
   applyMain(p.main);
-  applyDtit(p.main);
-  applyTitleC(p.title);
+  applyTitleC(p.title); /* applyDtit도 applyTitleC 내부에서 처리 */
   applySubC(p.sub);
   applyChkC(p.chk);
   applyBtnC(p.btn || p.live);
@@ -2545,6 +2544,8 @@ function applyDtit(v){
 function applyTitleC(v){
   eid('ed-title').style.color = v;
   eid('sw-title').style.background = v;
+  /* 세미나 상세내용 타이틀 = 메인타이틀과 동일 컬러 */
+  var dtit = eid('ed-dtit'); if(dtit) dtit.style.color = v;
 }
 function applySubC(v){
   eid('ed-sub').style.color = v;
