@@ -1472,7 +1472,7 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <input class="tb-project" id="project-name" value="202606" spellcheck="false">
   </div>
   <div class="tb-right">
-    <button class="tb-btn-ghost-v4" onclick="saveHistory()">완료 저장</button>
+    <button class="tb-btn-ghost-v4" id="btn-save-ctx" onclick="saveCtx()">안내문 저장</button>
     <button class="tb-btn-ghost-v4" id="btn-preview" onclick="openPreview()">미리보기</button>
     <div class="tb-btn-dl-wrap">
       <button class="tb-btn-dark-v4 main" onclick="handleMainDl()">다운로드</button>
@@ -2732,6 +2732,9 @@ function switchPage(page, btn){
   eid('history-page').style.display     = isHistory ? '' : 'none';
   if(isBanner){ syncFromGuide(); rb(); }
   if(isHistory){ renderHistory(); }
+  _currentPage = page;
+  var saveBtn = eid('btn-save-ctx');
+  if(saveBtn) saveBtn.textContent = (page === 'banner') ? '배너 저장' : '안내문 저장';
 }
 
 /* ─── 안내문 값 자동 동기화 ─── */
@@ -3957,27 +3960,113 @@ function collectPreviewState(){
   return s;
 }
 
-/* ── 미리보기: BroadcastChannel — 에디터 탭 캡처 → 미리보기 탭 전송 ── */
-function openPreview(){
-  if(!('BroadcastChannel' in window)){ showToast('이 브라우저는 미리보기를 지원하지 않습니다.', true); return; }
-  var ch = new BroadcastChannel('sb_preview_ch');
-  var url = window.location.origin + window.location.pathname + '?mode=preview';
-  window.open(url, '_blank');
-  showToast('미리보기 탭 준비 중…');
+/* ── 컨텍스트 저장 (탭에 따라 안내문/배너 구분) ── */
+var _currentPage = 'guide'; /* switchPage에서 업데이트 */
 
-  /* 핸드셰이크: 미리보기 탭이 'ready' 보내면 캡처 시작 (최대 6초 대기 후 자동 시작) */
-  var started = false;
-  var fallback = setTimeout(function(){
-    if(!started){ started = true; ch.onmessage = null; _captureForPreview(ch); }
-  }, 6000);
-  ch.onmessage = function(e){
-    if(e.data && e.data.type === 'ready' && !started){
-      started = true;
-      clearTimeout(fallback);
-      ch.onmessage = null;
-      _captureForPreview(ch);
+function saveCtx(){
+  if(_currentPage === 'banner') saveBannerCapture();
+  else saveGuideCapture();
+}
+
+/* onclone 공통 옵션 */
+function _h2cOpts(){
+  return {
+    scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
+    onclone: function(doc){
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
+      var gr = doc.getElementById('guide-root');
+      if(gr) gr.classList.remove('ed-mode');
+      var HIDE = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.bn-img-ctrl,#edit-hint';
+      doc.querySelectorAll(HIDE).forEach(function(el){ el.style.display='none'; });
+      doc.querySelectorAll('[contenteditable]').forEach(function(el){
+        el.removeAttribute('contenteditable');
+        el.style.outline='none'; el.style.boxShadow='none';
+      });
     }
   };
+}
+
+/* 안내문 저장: html2canvas → JPEG → localStorage */
+function saveGuideCapture(){
+  var btn = eid('btn-save-ctx');
+  if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
+  var gr = eid('guide-root');
+  if(!gr){ if(btn){btn.disabled=false;btn.textContent='안내문 저장';} return; }
+  _h2c(gr, _h2cOpts(), 30000)
+    .then(function(canvas){
+      canvas.toBlob(function(blob){
+        var reader = new FileReader();
+        reader.onload = function(){
+          try{
+            localStorage.setItem('sb_guide_jpeg', JSON.stringify({src:reader.result, ts:Date.now()}));
+            showToast('✅ 안내문 저장 완료');
+          }catch(e){ showToast('저장 실패: 용량 초과', true); }
+          if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+        };
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.88);
+    })
+    .catch(function(e){
+      console.error('안내문 캡처:', e);
+      showToast('안내문 캡처 실패', true);
+      if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+    });
+}
+
+/* 배너 저장: html2canvas 4종 → JPEG → localStorage */
+function saveBannerCapture(){
+  var btn = eid('btn-save-ctx');
+  if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
+  rb(); /* 배너 렌더 보장 */
+  var bp = eid('banner-page');
+  var bpHidden = bp && bp.style.display==='none';
+  if(bpHidden){ bp.style.cssText='display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
+  var TYPES = ['v200','v170','strip','news'];
+  var opts  = _h2cOpts();
+  var done  = 0; var total = 0;
+  var KEYS  = {v200:'sb_v200_jpeg',v170:'sb_v170_jpeg',strip:'sb_strip_jpeg',news:'sb_news_jpeg'};
+  var LABELS= {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
+  TYPES.forEach(function(t){ if(eid('bn-stage-'+t)) total++; });
+  if(!total){
+    if(bpHidden&&bp) bp.style.cssText='display:none;';
+    if(btn){btn.disabled=false;btn.textContent='배너 저장';}
+    showToast('배너가 없습니다', true); return;
+  }
+  function tick(){
+    if(++done < total) return;
+    if(bpHidden&&bp) bp.style.cssText='display:none;';
+    if(btn){btn.disabled=false;btn.textContent='배너 저장';}
+    showToast('✅ 배너 저장 완료');
+  }
+  TYPES.forEach(function(t){
+    var stage = eid('bn-stage-'+t);
+    if(!stage) return;
+    _h2c(stage, opts, 15000)
+      .then(function(canvas){
+        canvas.toBlob(function(blob){
+          var reader = new FileReader();
+          reader.onload = function(){
+            try{ localStorage.setItem(KEYS[t], JSON.stringify({src:reader.result, ts:Date.now(), label:LABELS[t]})); }catch(e){}
+            tick();
+          };
+          reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.92);
+      })
+      .catch(function(e){ console.error('배너 캡처:',t,e); tick(); });
+  });
+}
+
+/* ── 미리보기: localStorage 저장된 이미지를 새 탭에서 표시 ── */
+function openPreview(){
+  /* 저장된 이미지가 하나도 없으면 안내 */
+  var hasGuide  = !!localStorage.getItem('sb_guide_jpeg');
+  var hasBanner = ['sb_v200_jpeg','sb_v170_jpeg','sb_strip_jpeg','sb_news_jpeg'].some(function(k){ return !!localStorage.getItem(k); });
+  if(!hasGuide && !hasBanner){
+    showToast('먼저 안내문 또는 배너를 저장해주세요', true);
+    return;
+  }
+  var url = window.location.origin + window.location.pathname + '?mode=preview';
+  window.open(url, '_blank');
 }
 
 /* html2canvas + 타임아웃 래퍼 */
@@ -3988,76 +4077,6 @@ function _h2c(el, opts, ms){
   ]);
 }
 
-function _captureForPreview(ch){
-  var LABELS = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
-  var TYPES  = ['v200','v170','strip','news'];
-  /* onclone: 외부 CSS 링크 제거(CDN 폰트 재요청 차단) + 에디터 전용 UI 숨김 */
-  var opts = {
-    scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
-    onclone: function(doc){
-      /* 1. 외부 스타일시트 제거 (폰트 재로드 차단) */
-      doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
-      /* 2. ed-mode 제거 → 에디터 컨트롤 (섹션타입/항목추가/행컨트롤 등) 숨김 */
-      var gr = doc.getElementById('guide-root');
-      if(gr) gr.classList.remove('ed-mode');
-      /* 3. 명시적으로 에디터 전용 요소 숨김 */
-      var HIDE_SEL = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.jk-upload-area .logo-change-btn,.partner-upload-area .logo-change-btn,.bn-img-ctrl,#edit-hint,.fmt-bar';
-      doc.querySelectorAll(HIDE_SEL).forEach(function(el){ el.style.display='none'; });
-      /* 4. contenteditable 비활성화 (캡처 커서/아웃라인 제거) */
-      doc.querySelectorAll('[contenteditable]').forEach(function(el){
-        el.removeAttribute('contenteditable');
-        el.style.outline = 'none';
-        el.style.boxShadow = 'none';
-      });
-    }
-  };
-  var tasks = [];
-  var done  = 0;
-
-  /* 배너 렌더 보장 + off-screen 표시 */
-  rb();
-  var bp = eid('banner-page');
-  var bpHidden = bp && bp.style.display === 'none';
-  if(bpHidden){ bp.style.cssText = 'display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
-
-  function tick(){
-    if(++done < tasks.length) return;
-    if(bpHidden && bp) bp.style.cssText = 'display:none;';
-    ch.postMessage({type:'done'});
-    showToast('미리보기 전송 완료');
-  }
-
-  /* 배너 4종 (10초 타임아웃) */
-  TYPES.forEach(function(t){
-    var stage = eid('bn-stage-'+t);
-    if(!stage || stage.offsetWidth === 0) return;
-    tasks.push(
-      _h2c(stage, opts, 10000)
-        .then(function(c){ ch.postMessage({type:'banner', btype:t, label:LABELS[t], src:c.toDataURL('image/png')}); tick(); })
-        .catch(function(e){ console.error('배너 캡처:', t, e); tick(); })
-    );
-  });
-
-  /* 안내문 (25초 타임아웃) */
-  var gr = eid('guide-root');
-  if(gr){
-    tasks.push(
-      _h2c(gr, opts, 25000)
-        .then(function(c){ ch.postMessage({type:'guide', src:c.toDataURL('image/png')}); tick(); })
-        .catch(function(e){
-          console.error('안내문 캡처:', e);
-          /* 타임아웃/오류 시 빈 상태로 done 전송 */
-          ch.postMessage({type:'guide-error'});
-          tick();
-        })
-    );
-  }
-
-  if(!tasks.length){
-    if(bpHidden && bp) bp.style.cssText = 'display:none;';
-    ch.postMessage({type:'done'});
-  }
-}
 
 function applyPreviewState(s){
   if(!s) return;
@@ -4124,7 +4143,6 @@ function _applyIllustSrc(src){
 
 function showPreviewLayout(){
   document.body.classList.add('preview-mode');
-  /* BroadcastChannel 방식: 에디터 탭에서 캡처 전송 — 이 탭은 수신만 */
 }
 
 function initPreviewMode(){
@@ -4135,70 +4153,54 @@ function initPreviewMode(){
 
   var cont = eid('pv-image-container');
   if(!cont) return true;
-
-  /* 순서 고정 slot 생성 (안내문 → 배너 4종) */
-  var ORDER = [
-    {key:'guide', label:'안내문',                     cls:'pv-img-guide', isGuide:true},
-    {key:'v200',  label:'기업라운지 좌측 · 200×275',   cls:'pv-img-banner', isGuide:false},
-    {key:'v170',  label:'기업검색 좌측 · 170×235',     cls:'pv-img-banner', isGuide:false},
-    {key:'strip', label:'기업라운지 띠 · 940×80',      cls:'pv-img-banner', isGuide:false},
-    {key:'news',  label:'뉴스레터 · 535×274',          cls:'pv-img-banner', isGuide:false}
-  ];
   cont.innerHTML = '';
-  var slotMap = {};
-  ORDER.forEach(function(o){
-    var wrap = document.createElement('div');
-    wrap.className = 'pv-img-wrap ' + o.cls;
-    if(!o.isGuide){
-      var lbl = document.createElement('div');
-      lbl.className = 'pv-img-label'; lbl.textContent = o.label;
-      wrap.appendChild(lbl);
-    }
-    var slot = document.createElement('div');
-    slot.className = 'pv-slot-loading'; slot.id = 'pvsl-'+o.key;
-    slot.innerHTML = '<div class="pv-spinner"></div><span>' + (o.isGuide ? '안내문' : o.label) + ' 수신 중…</span>';
-    wrap.appendChild(slot);
-    cont.appendChild(wrap);
-    slotMap[o.key] = {wrap:wrap, slot:slot};
-  });
 
   var pvImgs = {};
-  var ch = new BroadcastChannel('sb_preview_ch');
 
-  /* 핸드셰이크: 에디터 탭에 준비 완료 신호 전송 */
-  ch.postMessage({type:'ready'});
-
-  ch.onmessage = function(e){
-    var d = e.data;
-    var key = d.type === 'guide' ? 'guide' : d.btype;
-    if((d.type === 'guide' || d.type === 'banner') && slotMap[key]){
-      pvImgs[key] = d.src;
-      var s = slotMap[key];
-      s.slot.remove();
+  /* 안내문 */
+  try{
+    var g = JSON.parse(localStorage.getItem('sb_guide_jpeg')||'null');
+    if(g && g.src){
+      pvImgs.guide = g.src;
+      var wrap = document.createElement('div');
+      wrap.className = 'pv-img-wrap pv-img-guide';
       var img = document.createElement('img');
-      img.src = d.src; img.className = 'pv-img';
-      s.wrap.appendChild(img);
-    } else if(d.type === 'guide-error'){
-      /* 안내문 캡처 실패 */
-      var slot = eid('pvsl-guide');
-      if(slot) slot.innerHTML = '<span style="color:#EF4444">⚠️ 안내문 캡처 실패<br><small style="font-weight:400;font-size:11px">미리보기를 다시 눌러주세요</small></span>';
-    } else if(d.type === 'done'){
-      /* 수신 못 한 slot 숨기기 */
-      ORDER.forEach(function(o){ if(!pvImgs[o.key]) slotMap[o.key].wrap.style.display='none'; });
-      _pvSetupDownloads(pvImgs);
+      img.src = g.src; img.className = 'pv-img';
+      wrap.appendChild(img);
+      cont.appendChild(wrap);
     }
-  };
+  }catch(e){}
 
-  /* 타임아웃: 40초 후에도 아무것도 안 오면 안내 메시지 */
-  setTimeout(function(){
-    if(!Object.keys(pvImgs).length){
-      ORDER.forEach(function(o){
-        var slot = eid('pvsl-'+o.key);
-        if(slot) slot.innerHTML = '<span>⚠️ 수신 실패<br><small style="font-weight:400;font-size:11px">에디터 탭에서 미리보기를 다시 눌러주세요</small></span>';
-      });
-    }
-  }, 40000);
+  /* 배너 4종 */
+  var BANNER_KEYS = [
+    {key:'sb_v200_jpeg', btype:'v200'},
+    {key:'sb_v170_jpeg', btype:'v170'},
+    {key:'sb_strip_jpeg',btype:'strip'},
+    {key:'sb_news_jpeg', btype:'news'}
+  ];
+  BANNER_KEYS.forEach(function(item){
+    try{
+      var b = JSON.parse(localStorage.getItem(item.key)||'null');
+      if(b && b.src){
+        pvImgs[item.btype] = b.src;
+        var wrap = document.createElement('div');
+        wrap.className = 'pv-img-wrap pv-img-banner';
+        var lbl = document.createElement('div');
+        lbl.className = 'pv-img-label'; lbl.textContent = b.label || item.btype;
+        var img = document.createElement('img');
+        img.src = b.src; img.className = 'pv-img';
+        wrap.appendChild(lbl); wrap.appendChild(img);
+        cont.appendChild(wrap);
+      }
+    }catch(e){}
+  });
 
+  /* 아무것도 없으면 안내 */
+  if(!Object.keys(pvImgs).length){
+    cont.innerHTML = '<div class="pv-slot-loading"><span>저장된 이미지가 없습니다.<br><small style="font-weight:400;font-size:11px">에디터에서 안내문/배너를 저장한 후 미리보기를 열어주세요</small></span></div>';
+  }
+
+  _pvSetupDownloads(pvImgs);
   return true;
 }
 
