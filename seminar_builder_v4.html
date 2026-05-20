@@ -8,6 +8,7 @@
 <link href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <style>
 /* ─── Reset ──────────────────────────────────── */
@@ -4031,45 +4032,68 @@ function copyPreviewUrl(){
 }
 
 /* jsonblob에 상태를 올리고 단축 URL 반환 (Promise) */
-/* ── 미리보기 단축 URL: 연월일시분초 키 + localStorage 저장 ── */
-function _pvDateKey(){
-  var n = new Date();
-  var p = function(v){ return ('0'+v).slice(-2); };
-  return n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+
-         p(n.getHours())+p(n.getMinutes())+p(n.getSeconds());
+/* ── 미리보기 공유 URL: LZString 압축 → is.gd 단축 ── */
+
+/* 프리뷰 전용 경량 상태: 편집 버튼 제거로 용량 절감 */
+function _collectPreviewStateSlim(){
+  var s = collectPreviewState();
+  /* det-rows 에서 편집 전용 .row-ctrl 제거 */
+  if(s.detHtml){
+    var tmp = document.createElement('div');
+    tmp.innerHTML = s.detHtml;
+    tmp.querySelectorAll('.row-ctrl,.att-del-btn,.tit-ctrl').forEach(function(el){ el.remove(); });
+    s.detHtml = tmp.innerHTML;
+  }
+  return s;
 }
 
-function _savePreviewLocal(){
-  /* 오래된 sb_pv_* 키 정리 (7일 초과) */
-  try{
-    var cutoff = Date.now() - 7*24*60*60*1000;
-    Object.keys(localStorage).forEach(function(k){
-      if(k.indexOf('sb_pv_2') === 0){
-        var ts = new Date(
-          k.slice(6,10)+'-'+k.slice(10,12)+'-'+k.slice(12,14)+'T'+
-          k.slice(14,16)+':'+k.slice(16,18)+':'+k.slice(18,20)
-        ).getTime();
-        if(!isNaN(ts) && ts < cutoff) localStorage.removeItem(k);
-      }
-    });
-  }catch(e){}
+/* LZString 압축 후 긴 URL 생성 */
+function _generateCompressedUrl(){
+  var state = _collectPreviewStateSlim();
+  var compressed = (typeof LZString !== 'undefined')
+    ? LZString.compressToEncodedURIComponent(JSON.stringify(state))
+    : btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  var prefix = (typeof LZString !== 'undefined') ? '#lz:' : '#';
+  return window.location.origin + window.location.pathname + '?mode=preview' + prefix + compressed;
+}
 
-  var key = _pvDateKey();            /* ex) 20260520143022 */
-  var state = collectPreviewState();
-  try{ localStorage.setItem('sb_pv_'+key, JSON.stringify(state)); }catch(e){}
-  return window.location.origin + window.location.pathname + '?mode=preview&k=' + key;
+/* is.gd API로 단축 URL 생성 (Promise) */
+function _shorten(longUrl){
+  return fetch('https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl))
+    .then(function(res){ return res.text(); })
+    .then(function(t){
+      t = t.trim();
+      if(!t.startsWith('http')) throw new Error('is.gd: ' + t);
+      return t;
+    });
 }
 
 function openPreview(){
-  var url = _savePreviewLocal();
-  window.open(url, '_blank');
+  var longUrl = _generateCompressedUrl();
+  window.open(longUrl, '_blank');
 }
 
 function shareShortUrl(){
-  var url = _savePreviewLocal();
-  navigator.clipboard && navigator.clipboard.writeText(url)
-    .then(function(){ showToast('✅ URL이 복사되었습니다'); })
-    .catch(function(){ showToast('복사 실패', true); });
+  var btn = eid('btn-share-url');
+  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
+
+  var longUrl = _generateCompressedUrl();
+
+  _shorten(longUrl)
+  .then(function(shortUrl){
+    return navigator.clipboard.writeText(shortUrl);
+  })
+  .then(function(){ showToast('✅ 단축 URL이 복사되었습니다'); })
+  .catch(function(e){
+    /* is.gd 실패 시 압축된 긴 URL로 폴백 */
+    console.warn('is.gd failed, using long URL:', e);
+    navigator.clipboard.writeText(longUrl)
+      .then(function(){ showToast('URL이 복사되었습니다'); })
+      .catch(function(){ showToast('복사 실패', true); });
+  })
+  .finally(function(){
+    if(btn){ btn.textContent = 'URL 공유'; btn.disabled = false; }
+  });
 }
 
 function applyPreviewState(s){
@@ -4178,8 +4202,21 @@ function initPreviewMode(){
     return true;
   }
 
-  /* 레거시: URL 해시(base64) 방식 */
+  /* LZString 압축 해시 방식 (#lz:<compressed>) */
   var hash = window.location.hash.slice(1);
+  if(hash.startsWith('lz:')){
+    try{
+      var json = (typeof LZString !== 'undefined')
+        ? LZString.decompressFromEncodedURIComponent(hash.slice(3))
+        : decodeURIComponent(escape(atob(hash.slice(3))));
+      var s = JSON.parse(json);
+      applyPreviewState(s);
+      showPreviewLayout();
+      return true;
+    }catch(e){ console.error('LZ decode error:', e); showToast('미리보기 데이터 복원 실패', true); return false; }
+  }
+
+  /* 레거시: URL 해시(base64) 방식 */
   if(!hash) return false;
   try{
     var s = JSON.parse(decodeURIComponent(escape(atob(hash))));
