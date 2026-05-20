@@ -4031,56 +4031,45 @@ function copyPreviewUrl(){
 }
 
 /* jsonblob에 상태를 올리고 단축 URL 반환 (Promise) */
-function _uploadPreviewState(){
+/* ── 미리보기 단축 URL: 연월일시분초 키 + localStorage 저장 ── */
+function _pvDateKey(){
+  var n = new Date();
+  var p = function(v){ return ('0'+v).slice(-2); };
+  return n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+
+         p(n.getHours())+p(n.getMinutes())+p(n.getSeconds());
+}
+
+function _savePreviewLocal(){
+  /* 오래된 sb_pv_* 키 정리 (7일 초과) */
+  try{
+    var cutoff = Date.now() - 7*24*60*60*1000;
+    Object.keys(localStorage).forEach(function(k){
+      if(k.indexOf('sb_pv_2') === 0){
+        var ts = new Date(
+          k.slice(6,10)+'-'+k.slice(10,12)+'-'+k.slice(12,14)+'T'+
+          k.slice(14,16)+':'+k.slice(16,18)+':'+k.slice(18,20)
+        ).getTime();
+        if(!isNaN(ts) && ts < cutoff) localStorage.removeItem(k);
+      }
+    });
+  }catch(e){}
+
+  var key = _pvDateKey();            /* ex) 20260520143022 */
   var state = collectPreviewState();
-  return fetch('https://jsonblob.com/api/jsonBlob', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    body: JSON.stringify(state)
-  })
-  .then(function(res){
-    if(!res.ok) throw new Error('API ' + res.status);
-    var loc = res.headers.get('Location');
-    if(!loc) throw new Error('no Location header');
-    var id = loc.split('/').pop();
-    return window.location.origin + window.location.pathname + '?mode=preview&jb=' + id;
-  });
+  try{ localStorage.setItem('sb_pv_'+key, JSON.stringify(state)); }catch(e){}
+  return window.location.origin + window.location.pathname + '?mode=preview&k=' + key;
 }
 
 function openPreview(){
-  /* 팝업 차단 방지: 사용자 이벤트 내에서 즉시 창 열기 */
-  var win = window.open('about:blank', '_blank');
-  var btn = eid('btn-preview');
-  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
-
-  _uploadPreviewState()
-  .catch(function(e){
-    /* jsonblob 실패 시 긴 URL로 폴백 */
-    console.warn('jsonblob upload failed, fallback to long URL:', e);
-    return generatePreviewUrl();
-  })
-  .then(function(url){
-    if(win) win.location.href = url;
-    if(btn){ btn.textContent = '미리보기'; btn.disabled = false; }
-  });
+  var url = _savePreviewLocal();
+  window.open(url, '_blank');
 }
 
 function shareShortUrl(){
-  var btn = eid('btn-share-url');
-  if(btn){ btn.textContent = '생성 중…'; btn.disabled = true; }
-
-  _uploadPreviewState()
-  .then(function(url){
-    return navigator.clipboard.writeText(url).then(function(){ return url; });
-  })
-  .then(function(){ showToast('✅ 단축 URL이 복사되었습니다'); })
-  .catch(function(e){
-    console.warn('short URL failed, fallback:', e);
-    copyPreviewUrl();
-  })
-  .finally(function(){
-    if(btn){ btn.textContent = 'URL 공유'; btn.disabled = false; }
-  });
+  var url = _savePreviewLocal();
+  navigator.clipboard && navigator.clipboard.writeText(url)
+    .then(function(){ showToast('✅ URL이 복사되었습니다'); })
+    .catch(function(){ showToast('복사 실패', true); });
 }
 
 function applyPreviewState(s){
@@ -4178,27 +4167,14 @@ function initPreviewMode(){
   var params = new URLSearchParams(window.location.search);
   if(params.get('mode') !== 'preview') return false;
 
-  var jbId = params.get('jb');
-  if(jbId){
-    /* 즉시 preview-mode 클래스 적용 → 에디터 UI 숨김 */
-    document.body.classList.add('preview-mode');
-    var root = eid('guide-root'); if(root) root.classList.remove('ed-mode');
-    /* jsonblob에서 상태 비동기 로드 */
-    fetch('https://jsonblob.com/api/jsonBlob/' + jbId, {
-      headers: {'Accept': 'application/json'}
-    })
-    .then(function(res){
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(function(s){
-      applyPreviewState(s);
-      showPreviewLayout();
-    })
-    .catch(function(e){
-      console.error('jsonblob load error:', e);
-      showToast('미리보기 로드 실패', true);
-    });
+  /* 연월일시분초 키 방식 */
+  var k = params.get('k');
+  if(k){
+    try{
+      var s = JSON.parse(localStorage.getItem('sb_pv_'+k)||'null');
+      if(s){ applyPreviewState(s); showPreviewLayout(); return true; }
+    }catch(e){}
+    showToast('미리보기 데이터를 찾을 수 없습니다', true);
     return true;
   }
 
