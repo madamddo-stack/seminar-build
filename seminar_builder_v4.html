@@ -4285,25 +4285,33 @@ function collectHistState(){
 }
 
 function saveHistory(){
-  var state = collectHistState();
-  /* 히스토리는 base64 이미지 제외 — 용량 절약 (이미지는 드래프트에만 보존) */
-  state.illustSrc = '';
-  state.bnImgSrc  = '';
+  var state = collectHistState(); /* 이미지(illustSrc, bnImgSrc) 포함 */
   var list = loadHistList();
   list.unshift(state);
   if(list.length > 50) list = list.slice(0, 50);
+
+  /* 1차: 이미지 포함 저장 시도 */
   try{
     localStorage.setItem(HIST_KEY, JSON.stringify(list));
     showToast('✅ 히스토리에 저장됨');
-  }catch(e){
-    /* QuotaExceededError 등: 오래된 항목 절반 제거 후 재시도 */
-    try{
-      list = list.slice(0, Math.ceil(list.length / 2));
-      localStorage.setItem(HIST_KEY, JSON.stringify(list));
-      showToast('✅ 저장됨 (오래된 항목 일부 삭제됨)');
-    }catch(e2){
-      showToast('⚠️ 저장 실패: 저장 공간 부족', true);
-    }
+    updateInspect(); return;
+  }catch(e){}
+
+  /* 2차: 오래된 항목 절반 제거 후 재시도 (이미지 포함) */
+  try{
+    list = list.slice(0, Math.ceil(list.length / 2));
+    localStorage.setItem(HIST_KEY, JSON.stringify(list));
+    showToast('✅ 저장됨 (오래된 항목 일부 삭제됨)');
+    updateInspect(); return;
+  }catch(e){}
+
+  /* 3차: 이미지 제외하고 저장 (최후 폴백) */
+  try{
+    list = list.map(function(s){ return Object.assign({}, s, {illustSrc:'', bnImgSrc:''}); });
+    localStorage.setItem(HIST_KEY, JSON.stringify(list));
+    showToast('✅ 저장됨 (용량 한계로 이미지 제외)');
+  }catch(e2){
+    showToast('⚠️ 저장 실패: 저장 공간 부족', true);
   }
   updateInspect();
 }
