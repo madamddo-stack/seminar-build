@@ -2919,7 +2919,8 @@ function bnImg(w, h, src, type){
   var fit = (type && _bnImgCtrl[type]) ? _bnImgCtrl[type].fit : 'contain';
   var pos = (type && _bnImgCtrl[type]) ? _bnImgCtrl[type].pos : 'center bottom';
   if(!src) return '<div style="width:'+w+'px;height:'+h+'px;display:flex;align-items:center;justify-content:center;font-size:'+(Math.min(w,h)*0.35)+'px;opacity:.12;">🖼</div>';
-  return '<img src="'+src+'" style="width:'+w+'px;height:'+h+'px;object-fit:'+fit+';object-position:'+pos+';display:block;">';
+  /* background-image 방식: html2canvas가 object-fit을 미지원 → background-size로 대체 */
+  return '<div style="width:'+w+'px;height:'+h+'px;background-image:url(\''+src+'\');background-size:'+fit+';background-position:'+pos+';background-repeat:no-repeat;flex-shrink:0;"></div>';
 }
 
 /* ════════════════════════════════════════
