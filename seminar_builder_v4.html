@@ -4249,10 +4249,7 @@ function collectHistState(){
   var ol = eid('ov-list');  if(ol) state.ovListHtml = ol.innerHTML;
   var op = eid('ov-prose'); if(op) state.ovProseHtml = op.innerHTML;
   /* 개요 타입 */
-  state.ovType = (function(){
-    var bar = eid('ov-type-bar'); if(!bar) return 'list';
-    var active = bar.querySelector('.ov-tab.active'); return active ? active.dataset.type : 'list';
-  })();
+  state.ovType = _ovType || 'list';
   /* 파트너 로고 */
   var pimg = eid('partner-img-top'); state.partnerSrc = (pimg && pimg.style.display!=='none') ? pimg.src : '';
   /* 일러스트 사이즈/정렬 */
