@@ -648,6 +648,29 @@ body.preview-mode .ed{ outline:none!important; box-shadow:none!important; }
 body.preview-mode #edit-hint{ display:none!important; }
 #pv-guide-dl,#preview-bn-heading{ display:none!important; }
 
+/* 미리보기 이미지 컨테이너 */
+#pv-image-container{
+  display:none; flex-direction:column; align-items:center; gap:56px;
+  max-width:1000px; margin:0 auto; padding-bottom:80px;
+}
+body.preview-mode #pv-image-container{ display:flex; }
+.pv-capturing{
+  font-size:14px; font-weight:600; color:#9CA3AF;
+  padding:80px 0; text-align:center;
+}
+.pv-img-wrap{ display:flex; flex-direction:column; align-items:flex-start; gap:10px; width:100%; }
+.pv-img-guide{ align-items:center; }
+.pv-img-banner{ align-items:flex-start; }
+.pv-img-label{
+  font-size:12px; font-weight:700; color:#9CA3AF;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.pv-img{ display:block; max-width:100%; box-shadow:0 4px 24px rgba(0,0,0,.12); }
+
+/* 이미지 준비 완료 시 원본 DOM 숨김 */
+body.pv-images-ready #guide-page,
+body.pv-images-ready #banner-page{ display:none!important; }
+
 /* ─── 파트너 로고 픽커 팝업 ─────────────── */
 #partner-picker{
   display:none;position:fixed;z-index:9500;
@@ -2219,6 +2242,8 @@ body.preview-mode .bn-detail-body{ display:none!important; }
 <div id="pv-guide-dl" style="display:none!important"></div>
 <!-- 배너 섹션 레이블 (legacy placeholder) -->
 <div id="preview-bn-heading" style="display:none!important"></div>
+<!-- 미리보기 PNG 이미지 컨테이너 -->
+<div id="pv-image-container"></div>
 
 <!-- 파트너 로고 픽커 팝업 -->
 <div id="partner-picker">
@@ -3990,6 +4015,9 @@ function copyPreviewUrl(){
 /* 프리뷰 전용 경량 상태: 편집 버튼 제거로 용량 절감 */
 function _collectPreviewStateSlim(){
   var s = collectPreviewState();
+  /* base64 이미지 제거 — URL 크기 감소 */
+  s.illustSrc = '';
+  s.bnImgSrc  = '';
   /* det-rows 에서 편집 전용 .row-ctrl 제거 */
   if(s.detHtml){
     var tmp = document.createElement('div');
@@ -4010,9 +4038,20 @@ function _generateCompressedUrl(){
   return window.location.origin + window.location.pathname + '?mode=preview' + prefix + compressed;
 }
 
+function _shorten(longUrl){
+  return fetch('https://is.gd/create.php?format=simple&url='+encodeURIComponent(longUrl))
+    .then(function(r){ return r.text(); })
+    .then(function(t){ t=t.trim(); if(!t.startsWith('http')) throw new Error(t); return t; });
+}
+
 function openPreview(){
+  var btn = eid('btn-preview');
+  if(btn){ btn.textContent='생성 중…'; btn.disabled=true; }
   var longUrl = _generateCompressedUrl();
-  window.open(longUrl, '_blank');
+  _shorten(longUrl)
+    .then(function(shortUrl){ window.open(shortUrl,'_blank'); })
+    .catch(function(){ window.open(longUrl,'_blank'); })
+    .finally(function(){ if(btn){ btn.textContent='미리보기'; btn.disabled=false; } });
 }
 
 function applyPreviewState(s){
@@ -4089,12 +4128,67 @@ function _applyIllustSrc(src){
 function showPreviewLayout(){
   document.body.classList.add('preview-mode');
   var root=eid('guide-root'); if(root) root.classList.remove('ed-mode');
-  /* 안내문 → 배너 필드 동기화 후 렌더 */
   syncFromGuide();
   var d=getBnData();
   ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
-  /* banner-page inline display:none 해제 */
   var bp=eid('banner-page'); if(bp) bp.style.display='block';
+  /* DOM 렌더 후 PNG 캡처 */
+  setTimeout(renderPreviewImages, 400);
+}
+
+function renderPreviewImages(){
+  var cont = eid('pv-image-container');
+  if(!cont) return;
+
+  /* 로딩 표시 */
+  cont.innerHTML = '<div class="pv-capturing">이미지 생성 중…</div>';
+  cont.style.display = 'block';
+
+  var h2cBase = {scale:2, useCORS:true, allowTaint:true, backgroundColor:null, logging:false};
+  var bannerTypes = ['v200','v170','strip','news'];
+  var bannerLabels = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
+
+  var tasks = [];
+
+  /* 안내문 캡처 */
+  var gr = eid('guide-root');
+  if(gr) tasks.push(html2canvas(gr, h2cBase).then(function(c){ return {type:'guide', canvas:c}; }));
+
+  /* 배너 4종 캡처 */
+  bannerTypes.forEach(function(t){
+    var stage = eid('bn-stage-'+t);
+    if(stage && stage.offsetWidth > 0){
+      tasks.push(html2canvas(stage, Object.assign({}, h2cBase, {scale:1}))
+        .then(function(c){ return {type:t, canvas:c}; }));
+    }
+  });
+
+  Promise.all(tasks).then(function(results){
+    cont.innerHTML = '';
+    results.forEach(function(r){
+      var wrap = document.createElement('div');
+      wrap.className = 'pv-img-wrap' + (r.type==='guide' ? ' pv-img-guide' : ' pv-img-banner');
+
+      if(r.type !== 'guide'){
+        var lbl = document.createElement('div');
+        lbl.className = 'pv-img-label';
+        lbl.textContent = bannerLabels[r.type] || r.type;
+        wrap.appendChild(lbl);
+      }
+
+      var img = document.createElement('img');
+      img.src = r.canvas.toDataURL('image/png');
+      img.className = 'pv-img';
+      wrap.appendChild(img);
+      cont.appendChild(wrap);
+    });
+
+    /* 원본 DOM 숨김 */
+    document.body.classList.add('pv-images-ready');
+  }).catch(function(e){
+    console.error('renderPreviewImages error:', e);
+    cont.style.display = 'none';
+  });
 }
 
 function initPreviewMode(){
