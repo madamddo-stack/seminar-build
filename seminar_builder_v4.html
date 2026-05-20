@@ -2234,7 +2234,8 @@ body.preview-mode .bn-detail-body{ display:none!important; }
     <span class="ph-title">세미나 미리보기</span>
   </div>
   <div class="ph-right">
-    <span class="ph-note">고화질 저장은 에디터 다운로드 버튼을 이용하세요</span>
+    <button class="ph-btn" onclick="dlGuidePng()"><span class="mi mi-xs">file_download</span> 안내문 저장</button>
+    <button class="ph-btn ph-btn-dark" onclick="pngSaveAll()"><span class="mi mi-xs">download_for_offline</span> 배너 4종 저장</button>
   </div>
 </div>
 <!-- 안내문 다운로드 바 (legacy placeholder) -->
@@ -3993,71 +3994,28 @@ function collectPreviewState(){
   return s;
 }
 
-/* ── 미리보기: 에디터에서 html2canvas 캡처 → localStorage 저장 → 짧은 키 URL ── */
+/* ── 미리보기: 상태(이미지 포함) localStorage 저장 → 즉시 새 탭 오픈 ── */
 var _pvCapKey = null;
 
-/* 단일 요소 캡처 — 8초 타임아웃, 실패 시 null 반환 */
-function _capEl(el, opts){
-  var timeout = new Promise(function(resolve){
-    setTimeout(function(){ resolve(null); }, 8000);
-  });
-  var capture = html2canvas(el, opts).then(function(c){
-    return c.toDataURL('image/png');
-  }).catch(function(){ return null; });
-  return Promise.race([capture, timeout]);
-}
-
 function openPreview(){
-  var btn = eid('btn-preview');
-  if(btn){ btn.textContent='캡처 중…'; btn.disabled=true; }
-
-  syncFromGuide();
-  var d = getBnData();
-  ['v200','v170','strip','news'].forEach(function(t){ renderBanner(t,d); });
-  var bp = eid('banner-page');
-  var bpWasHidden = bp && bp.style.display === 'none';
-  if(bpWasHidden) bp.style.display = 'block';
-
-  /* imageTimeout:3000 — 외부 이미지 로딩 대기 최대 3초 */
-  var h2c = {scale:1, useCORS:true, allowTaint:true, logging:false, imageTimeout:3000};
-  var bannerTypes = ['v200','v170','strip','news'];
-  var tasks = [];
-
-  var gr = eid('guide-root');
-  if(gr) tasks.push(_capEl(gr, h2c).then(function(png){ return {k:'guide', png:png}; }));
-
-  bannerTypes.forEach(function(t){
-    var st = eid('bn-stage-'+t);
-    if(st) tasks.push(_capEl(st, h2c).then(function(png){ return {k:t, png:png}; }));
-  });
-
-  Promise.all(tasks).then(function(results){
-    var cap = {};
-    results.forEach(function(r){ if(r.png) cap[r.k] = r.png; });
-
-    var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-    var saved = false;
-    try{ localStorage.setItem('sb_pvcap_'+key, JSON.stringify(cap)); saved=true; }catch(e){
-      try{
-        var small = {guide: cap.guide};
-        localStorage.setItem('sb_pvcap_'+key, JSON.stringify(small)); saved=true;
-      }catch(e2){}
-    }
-
-    /* 저장 성공 여부와 관계없이 탭은 항상 열기 */
-    var url = window.location.origin+window.location.pathname+'?mode=preview&k='+key;
-    if(!saved){
-      /* localStorage 실패 → 빈 미리보기라도 열기 */
-      showToast('저장 공간 부족 — 미리보기 일부 제한될 수 있음', true);
-    }
-    window.open(url, '_blank');
-  }).catch(function(e){
-    console.error('openPreview error:', e);
-    showToast('캡처 중 오류 발생', true);
-  }).finally(function(){
-    if(bpWasHidden) bp.style.display = 'none';
-    if(btn){ btn.textContent='미리보기'; btn.disabled=false; }
-  });
+  var state = collectPreviewState(); /* illustSrc, bnImgSrc 포함 */
+  var key = new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
+  var saved = false;
+  try{
+    localStorage.setItem('sb_pvcap_'+key, JSON.stringify(state));
+    saved = true;
+  }catch(e){
+    /* QuotaExceeded: 이미지 제외 후 재시도 */
+    try{
+      state.illustSrc = '';
+      state.bnImgSrc  = '';
+      localStorage.setItem('sb_pvcap_'+key, JSON.stringify(state));
+      saved = true;
+    }catch(e2){}
+  }
+  if(!saved){ showToast('저장 공간 부족', true); return; }
+  var url = window.location.origin+window.location.pathname+'?mode=preview&k='+key;
+  window.open(url, '_blank');
 }
 
 function applyPreviewState(s){
@@ -4202,73 +4160,17 @@ function initPreviewMode(){
   var k = params.get('k');
   if(k){
     try{
-      var cap = JSON.parse(localStorage.getItem('sb_pvcap_'+k)||'null');
-      if(cap){ showCapturedImages(cap, k); return true; }
+      var s = JSON.parse(localStorage.getItem('sb_pvcap_'+k)||'null');
+      if(s) applyPreviewState(s);
     }catch(e){ console.error('Preview load error:', e); }
   }
 
-  /* 캡처 데이터 없을 때 — 안내문 표시 */
   showPreviewLayout();
   return true;
 }
 
 var _pvCapData = null; /* 다운로드용 캡처 데이터 */
 
-function showCapturedImages(cap, key){
-  _pvCapData = cap;
-  document.body.classList.add('preview-mode','pv-images-ready');
-  var cont = eid('pv-image-container');
-  if(!cont) return;
-
-  var bannerLabels = {
-    v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235',
-    strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'
-  };
-
-  ['guide','v200','v170','strip','news'].forEach(function(type){
-    if(!cap[type]) return;
-    var wrap = document.createElement('div');
-    wrap.className = 'pv-img-wrap '+(type==='guide'?'pv-img-guide':'pv-img-banner');
-    wrap.dataset.type = type;
-
-    if(type !== 'guide'){
-      var lbl = document.createElement('div');
-      lbl.className = 'pv-img-label';
-      lbl.textContent = bannerLabels[type]||type;
-      wrap.appendChild(lbl);
-    }
-
-    var img = document.createElement('img');
-    img.src = cap[type];
-    img.className = 'pv-img';
-    wrap.appendChild(img);
-    cont.appendChild(wrap);
-  });
-}
-
-/* 미리보기 페이지 다운로드 */
-var _pvBannerNames = {
-  v200:'기업라운지좌측_200x275', v170:'기업검색좌측_170x235',
-  strip:'jk_pc_기업라운지띠_940X80', news:'뉴스레터_535x274'
-};
-function _pvDownload(dataUrl, filename){
-  var a = document.createElement('a');
-  a.href = dataUrl; a.download = filename; a.click();
-}
-function pvDlGuide(){
-  if(_pvCapData && _pvCapData.guide){
-    var d = new Date().toISOString().slice(0,10);
-    _pvDownload(_pvCapData.guide, 'seminar_guide_'+d+'.png');
-  } else { dlGuidePng(); }
-}
-function pvDlBanners(){
-  if(_pvCapData){
-    var d = new Date().toISOString().slice(0,10);
-    ['v200','v170','strip','news'].forEach(function(t){
-      if(_pvCapData[t]) _pvDownload(_pvCapData[t], _pvBannerNames[t]+'_'+d+'.png');
-    });
-  } else { pngSaveAll(); }
-}
 
 
 /* ══════════════════════════════════════════
