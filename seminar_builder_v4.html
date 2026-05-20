@@ -3991,10 +3991,25 @@ function _h2c(el, opts, ms){
 function _captureForPreview(ch){
   var LABELS = {v200:'기업라운지 좌측 · 200×275', v170:'기업검색 좌측 · 170×235', strip:'기업라운지 띠 · 940×80', news:'뉴스레터 · 535×274'};
   var TYPES  = ['v200','v170','strip','news'];
-  /* onclone: 클론 DOM에서 외부 CSS 링크 제거 — CDN 폰트 재요청 차단 (이미 렌더됨) */
+  /* onclone: 외부 CSS 링크 제거(CDN 폰트 재요청 차단) + 에디터 전용 UI 숨김 */
   var opts = {
     scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
-    onclone: function(doc){ doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); }); }
+    onclone: function(doc){
+      /* 1. 외부 스타일시트 제거 (폰트 재로드 차단) */
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
+      /* 2. ed-mode 제거 → 에디터 컨트롤 (섹션타입/항목추가/행컨트롤 등) 숨김 */
+      var gr = doc.getElementById('guide-root');
+      if(gr) gr.classList.remove('ed-mode');
+      /* 3. 명시적으로 에디터 전용 요소 숨김 */
+      var HIDE_SEL = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.jk-upload-area .logo-change-btn,.partner-upload-area .logo-change-btn,.bn-img-ctrl,#edit-hint,.fmt-bar';
+      doc.querySelectorAll(HIDE_SEL).forEach(function(el){ el.style.display='none'; });
+      /* 4. contenteditable 비활성화 (캡처 커서/아웃라인 제거) */
+      doc.querySelectorAll('[contenteditable]').forEach(function(el){
+        el.removeAttribute('contenteditable');
+        el.style.outline = 'none';
+        el.style.boxShadow = 'none';
+      });
+    }
   };
   var tasks = [];
   var done  = 0;
