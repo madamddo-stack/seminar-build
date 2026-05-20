@@ -732,6 +732,39 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
 }
 .pal-sw:hover::after{opacity:1;}
 
+/* ─── 배너 이미지 위치 컨트롤 ─────────────── */
+.bn-img-ctrl{
+  padding:10px 12px 12px;
+  border-top:1px solid var(--border);
+  background:#FAFAFA;
+}
+.bn-img-ctrl-head{
+  margin-bottom:8px;
+}
+.bn-img-ctrl-row{
+  display:flex;align-items:center;gap:8px;margin-bottom:7px;
+}
+.bn-fit-row{ display:flex;gap:4px;flex:1; }
+.bn-fit-btn{
+  flex:1;padding:4px 2px;font-size:11px;font-weight:600;
+  border:1px solid var(--border);border-radius:5px;
+  background:#fff;color:var(--text-muted);cursor:pointer;
+  transition:all .12s;font-family:inherit;
+}
+.bn-fit-btn.active{ background:var(--blue-500);border-color:var(--blue-500);color:#fff; }
+.bn-pos-grid{
+  display:grid;grid-template-columns:repeat(3,18px);
+  grid-template-rows:repeat(3,18px);gap:2px;
+}
+.bn-pos-btn{
+  width:18px;height:18px;border-radius:3px;
+  border:1px solid #D1D5DB;background:#fff;
+  cursor:pointer;transition:all .12s;padding:0;
+}
+.bn-pos-btn:hover{ background:var(--blue-50);border-color:var(--blue-300); }
+.bn-pos-btn.active{ background:var(--blue-500);border-color:var(--blue-500); }
+body.preview-mode .bn-img-ctrl{ display:none!important; }
+
 /* ─── 상세 행 (동적) ──────────────────────── */
 .det-row-wrap{
   position:relative;
@@ -1821,6 +1854,26 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
             <span class="bn-tit-ovr-lbl">줄</span>
           </div>
         </div>
+        <div class="bn-img-ctrl" id="bn-img-ctrl-v200">
+          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+          <div class="bn-img-ctrl-row">
+            <div class="bn-fit-row">
+              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v200-contain" onclick="setBnImgFit('v200','contain')">원본비율</button>
+              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v200-cover" onclick="setBnImgFit('v200','cover')">꽉채우기</button>
+            </div>
+            <div class="bn-pos-grid" id="bn-pos-v200">
+              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v200','left top')"></button>
+              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v200','center top')"></button>
+              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v200','right top')"></button>
+              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v200','left center')"></button>
+              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v200','center center')"></button>
+              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v200','right center')"></button>
+              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v200','left bottom')"></button>
+              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v200','center bottom')"></button>
+              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v200','right bottom')"></button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ② 기업검색좌측 170×235 -->
@@ -1866,6 +1919,26 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
             <span class="bn-tit-ovr-lbl">줄</span>
           </div>
         </div>
+        <div class="bn-img-ctrl" id="bn-img-ctrl-v170">
+          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+          <div class="bn-img-ctrl-row">
+            <div class="bn-fit-row">
+              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-v170-contain" onclick="setBnImgFit('v170','contain')">원본비율</button>
+              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-v170-cover" onclick="setBnImgFit('v170','cover')">꽉채우기</button>
+            </div>
+            <div class="bn-pos-grid" id="bn-pos-v170">
+              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('v170','left top')"></button>
+              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('v170','center top')"></button>
+              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('v170','right top')"></button>
+              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('v170','left center')"></button>
+              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('v170','center center')"></button>
+              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('v170','right center')"></button>
+              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('v170','left bottom')"></button>
+              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('v170','center bottom')"></button>
+              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('v170','right bottom')"></button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ③ 기업라운지띠 940×80 -->
@@ -1902,6 +1975,26 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
             <input class="bn-sz-inp" id="ovr-strip-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
             <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('strip','lines',1)">＋</button>
             <span class="bn-tit-ovr-lbl">줄</span>
+          </div>
+        </div>
+        <div class="bn-img-ctrl" id="bn-img-ctrl-strip">
+          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+          <div class="bn-img-ctrl-row">
+            <div class="bn-fit-row">
+              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-strip-contain" onclick="setBnImgFit('strip','contain')">원본비율</button>
+              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-strip-cover" onclick="setBnImgFit('strip','cover')">꽉채우기</button>
+            </div>
+            <div class="bn-pos-grid" id="bn-pos-strip">
+              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('strip','left top')"></button>
+              <button class="bn-pos-btn active" data-pos="center top" onclick="setBnImgPos('strip','center top')"></button>
+              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('strip','right top')"></button>
+              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('strip','left center')"></button>
+              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('strip','center center')"></button>
+              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('strip','right center')"></button>
+              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('strip','left bottom')"></button>
+              <button class="bn-pos-btn" data-pos="center bottom" onclick="setBnImgPos('strip','center bottom')"></button>
+              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('strip','right bottom')"></button>
+            </div>
           </div>
         </div>
       </div>
@@ -1947,6 +2040,26 @@ body.preview-mode .bn-block-btn:first-child:hover{ background:#2d3748; }
             <input class="bn-sz-inp" id="ovr-news-lines" type="number" placeholder="공통" min="1" max="5" oninput="rb()">
             <button class="bn-sz-btn" onmousedown="event.preventDefault()" onclick="stepOvr('news','lines',1)">＋</button>
             <span class="bn-tit-ovr-lbl">줄</span>
+          </div>
+        </div>
+        <div class="bn-img-ctrl" id="bn-img-ctrl-news">
+          <div class="bn-img-ctrl-head"><span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;">이미지 위치</span></div>
+          <div class="bn-img-ctrl-row">
+            <div class="bn-fit-row">
+              <button class="bn-fit-btn active" data-fit="contain" id="bn-fit-news-contain" onclick="setBnImgFit('news','contain')">원본비율</button>
+              <button class="bn-fit-btn" data-fit="cover" id="bn-fit-news-cover" onclick="setBnImgFit('news','cover')">꽉채우기</button>
+            </div>
+            <div class="bn-pos-grid" id="bn-pos-news">
+              <button class="bn-pos-btn" data-pos="left top" onclick="setBnImgPos('news','left top')"></button>
+              <button class="bn-pos-btn" data-pos="center top" onclick="setBnImgPos('news','center top')"></button>
+              <button class="bn-pos-btn" data-pos="right top" onclick="setBnImgPos('news','right top')"></button>
+              <button class="bn-pos-btn" data-pos="left center" onclick="setBnImgPos('news','left center')"></button>
+              <button class="bn-pos-btn" data-pos="center center" onclick="setBnImgPos('news','center center')"></button>
+              <button class="bn-pos-btn" data-pos="right center" onclick="setBnImgPos('news','right center')"></button>
+              <button class="bn-pos-btn" data-pos="left bottom" onclick="setBnImgPos('news','left bottom')"></button>
+              <button class="bn-pos-btn active" data-pos="center bottom" onclick="setBnImgPos('news','center bottom')"></button>
+              <button class="bn-pos-btn" data-pos="right bottom" onclick="setBnImgPos('news','right bottom')"></button>
+            </div>
           </div>
         </div>
       </div>
@@ -2535,6 +2648,17 @@ function applyIllustAlign(align){
 /* 배너 타입별 미리보기 스케일 */
 var _BN_SCALES = { v200:1, v170:1, strip:1, news:1 };
 var _bnImgSrc = '';    // 배너 이미지
+var _bnImgCtrl = {
+  v200:  { fit: 'contain', pos: 'center bottom' },
+  v170:  { fit: 'contain', pos: 'center bottom' },
+  strip: { fit: 'contain', pos: 'center top' },
+  news:  { fit: 'contain', pos: 'center bottom' }
+};
+var _BN_POS = [
+  'left top',    'center top',    'right top',
+  'left center', 'center center', 'right center',
+  'left bottom', 'center bottom', 'right bottom'
+];
 var _titStyle = 'dual'; // 'dual' | 'bold'
 function setTitStyle(v, btn){
   _titStyle = v;
@@ -2706,11 +2830,50 @@ function bnTitleLines(title, fontSize, maxChars, maxLines, attClr, titClr, style
   }).join('');
 }
 
+/* ── 이미지 맞춤/위치 제어 ── */
+function setBnImgFit(type, fit){
+  _bnImgCtrl[type].fit = fit;
+  /* UI 갱신 */
+  ['contain','cover'].forEach(function(f){
+    var btn = eid('bn-fit-'+type+'-'+f);
+    if(btn) btn.classList.toggle('active', f === fit);
+  });
+  rb();
+}
+function setBnImgPos(type, pos){
+  _bnImgCtrl[type].pos = pos;
+  /* UI 갱신 */
+  var grid = eid('bn-pos-'+type);
+  if(grid) grid.querySelectorAll('.bn-pos-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.pos === pos);
+  });
+  rb();
+}
+function initBnImgCtrls(){
+  ['v200','v170','strip','news'].forEach(function(type){
+    var ctrl = eid('bn-img-ctrl-'+type); if(!ctrl) return;
+    var c = _bnImgCtrl[type];
+    /* fit 버튼 */
+    var fitEl = ctrl.querySelector('.bn-fit-row');
+    if(fitEl){
+      fitEl.querySelectorAll('.bn-fit-btn').forEach(function(b){
+        b.classList.toggle('active', b.dataset.fit === c.fit);
+      });
+    }
+    /* pos 그리드 */
+    var posEl = eid('bn-pos-'+type);
+    if(posEl) posEl.querySelectorAll('.bn-pos-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.pos === c.pos);
+    });
+  });
+}
+
 /* ── 이미지 헬퍼 ── */
-function bnImg(w, h, src, fit){
-  fit = fit || 'contain';
+function bnImg(w, h, src, type){
+  var fit = (type && _bnImgCtrl[type]) ? _bnImgCtrl[type].fit : 'contain';
+  var pos = (type && _bnImgCtrl[type]) ? _bnImgCtrl[type].pos : 'center bottom';
   if(!src) return '<div style="width:'+w+'px;height:'+h+'px;display:flex;align-items:center;justify-content:center;font-size:'+(Math.min(w,h)*0.35)+'px;opacity:.12;">🖼</div>';
-  return '<img src="'+src+'" style="width:'+w+'px;height:'+h+'px;object-fit:'+fit+';object-position:center bottom;display:block;">';
+  return '<img src="'+src+'" style="width:'+w+'px;height:'+h+'px;object-fit:'+fit+';object-position:'+pos+';display:block;">';
 }
 
 /* ════════════════════════════════════════
@@ -2732,7 +2895,7 @@ function rV200(d){
     '</div>'+
     /* 이미지: y:129 고정, 중앙 정렬 */
     '<div style="position:absolute;top:129px;left:50%;transform:translateX(-50%);z-index:1;">'+
-      bnImg(160, 108, d.img)+
+      bnImg(160, 108, d.img, 'v200')+
     '</div>'+
     /* 버튼: 하단 고정 */
     '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
@@ -2761,7 +2924,7 @@ function rV170(d){
     '</div>'+
     /* 이미지: y:131, left:16 */
     '<div style="position:absolute;top:131px;left:16px;z-index:1;">'+
-      bnImg(131, 68, d.img)+
+      bnImg(131, 68, d.img, 'v170')+
     '</div>'+
     /* 버튼: 하단 고정 */
     '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
@@ -2795,8 +2958,9 @@ function rStrip(d){
       '<span style="font-weight:900;color:'+d.titClr+';letter-spacing:-0.02em;">'+escHtml(last)+'</span>';
   }
 
+  var _sc = _bnImgCtrl.strip;
   var imgHtml = d.img
-    ? '<img src="'+d.img+'" style="width:100%;height:auto;display:block;object-fit:contain;object-position:center top;">'
+    ? '<img src="'+d.img+'" style="width:100%;height:auto;display:block;object-fit:'+_sc.fit+';object-position:'+_sc.pos+';">'
     : '<div style="width:165px;height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;opacity:.12;">🖼</div>';
 
   return '<div class="bn-canvas" style="width:940px;height:80px;background:'+d.bg+';display:flex;align-items:center;overflow:hidden;position:relative;">'+
@@ -2834,7 +2998,7 @@ function rNews(d){
   return '<div class="bn-canvas" style="width:535px;height:274px;background:'+d.bg+';position:relative;overflow:hidden;">'+
     /* 이미지: absolute, 우측 하단 (텍스트 뒤) */
     '<div style="position:absolute;left:263px;top:122px;width:272px;height:152px;overflow:hidden;z-index:1;">'+
-      bnImg(272, 152, d.img)+
+      bnImg(272, 152, d.img, 'news')+
     '</div>'+
     /* 텍스트 블록: absolute, 수직 중앙, 전체 너비, 이미지 위 */
     '<div style="position:absolute;top:50%;transform:translateY(-50%);left:0;width:535px;padding:0 30px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;align-items:flex-start;z-index:2;">'+
@@ -3791,6 +3955,16 @@ function applyPreviewState(s){
     if(ilImg){ ilImg.style.width = s.illustWidth+'%'; ilImg.style.maxWidth='900px'; }
   }
   if(s.illustAlign) applyIllustAlign(s.illustAlign);
+  /* 배너 이미지 맞춤/위치 복원 */
+  if(s.bnImgCtrl){
+    ['v200','v170','strip','news'].forEach(function(t){
+      if(s.bnImgCtrl[t]){
+        _bnImgCtrl[t].fit = s.bnImgCtrl[t].fit || 'contain';
+        _bnImgCtrl[t].pos = s.bnImgCtrl[t].pos || 'center bottom';
+      }
+    });
+    initBnImgCtrls();
+  }
   /* 배너 필드 */
   if(s.bnf) Object.keys(s.bnf).forEach(function(id){ var el=eid(id); if(el&&el.tagName) el.value=s.bnf[id]; });
 }
@@ -3998,6 +4172,8 @@ function collectHistState(){
   /* subClr / chkClr */
   state.subClr = (eid('ed-sub') && eid('ed-sub').style.color) || '';
   state.chkClr = (eid('sw-chk') && eid('sw-chk').style.background) || '';
+  /* 배너 이미지 맞춤/위치 */
+  state.bnImgCtrl = JSON.parse(JSON.stringify(_bnImgCtrl));
   return state;
 }
 
@@ -4091,6 +4267,9 @@ function clearHistory(){
 
   /* 히스토리 탭 방문 시 draft 배너 체크 */
   checkDraftOnLoad();
+
+  /* 배너 이미지 컨트롤 UI 초기화 */
+  initBnImgCtrls();
 
   /* 미리보기 모드 체크 — URL에 ?mode=preview 있으면 미리보기 레이아웃으로 전환 */
   initPreviewMode();
