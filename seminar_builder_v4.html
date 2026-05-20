@@ -117,25 +117,35 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 }
 .rail-item{
   width:64px;display:flex;flex-direction:column;align-items:center;
-  gap:5px;padding:10px 4px 8px;border-radius:12px;border:none;
+  gap:6px;padding:10px 4px 8px;border-radius:12px;border:none;
   background:transparent;cursor:pointer;
   color:var(--text-muted);
-  transition:background .15s, color .15s;
+  transition:color .15s;
 }
-.rail-item:hover{
-  background:rgba(19,25,39,.06);
-  color:var(--text-sec);
+.rail-item:hover .rail-thumb{
+  border-color:#B0B8C8;
+  background:rgba(19,25,39,.04);
 }
-.rail-item.active{
-  background:#131927;
-  color:#fff;
-}
+.rail-item:hover{ color:var(--text-sec); }
+/* OFF: 원형 링 */
 .rail-thumb{
-  width:24px;height:24px;
+  width:40px;height:40px;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
+  border-radius:50%;
+  border:1.5px solid #D1D5DB;
+  background:transparent;
+  transition:background .15s, border-color .15s;
 }
-.rail-thumb svg{width:22px;height:22px;stroke:currentColor;}
+.rail-thumb svg{width:20px;height:20px;stroke:currentColor;}
+/* ON: 둥근 사각형 + 연파랑 채움 */
+.rail-item.active .rail-thumb{
+  border-radius:12px;
+  border-color:transparent;
+  background:var(--blue-50);
+}
+.rail-item.active{ color:var(--blue-600); }
+.rail-item.active .rail-thumb svg{ stroke:var(--blue-600); }
 .rail-label{font-size:10px;font-weight:700;white-space:nowrap;color:inherit;}
 .rail-item-bottom{margin-top:auto;}
 
