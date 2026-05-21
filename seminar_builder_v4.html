@@ -2951,10 +2951,12 @@ function rV200(d){
     '<div style="position:absolute;top:129px;left:50%;transform:translateX(-50%);z-index:1;">'+
       bnImg(160, 108, d.img, 'v200')+
     '</div>'+
-    /* 버튼: 하단 고정 */
-    '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
-      '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
-      bnArrow(d.btnTc, 20)+
+    /* 버튼: 하단 고정 — html2canvas용 line-height 수직 중앙 */
+    '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';z-index:3;text-align:center;line-height:38px;overflow:hidden;">'+
+      '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;line-height:1;">'+
+        '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
+        bnArrow(d.btnTc, 20)+
+      '</span>'+
     '</div>'+
   '</div>';
 }
@@ -2980,10 +2982,12 @@ function rV170(d){
     '<div style="position:absolute;top:131px;left:16px;z-index:1;">'+
       bnImg(131, 68, d.img, 'v170')+
     '</div>'+
-    /* 버튼: 하단 고정 */
-    '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
-      '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
-      bnArrow(d.btnTc, 18)+
+    /* 버튼: 하단 고정 — html2canvas용 line-height 수직 중앙 */
+    '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';z-index:3;text-align:center;line-height:36px;overflow:hidden;">'+
+      '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;line-height:1;">'+
+        '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
+        bnArrow(d.btnTc, 18)+
+      '</span>'+
     '</div>'+
   '</div>';
 }
@@ -4326,6 +4330,8 @@ function initPreviewMode(){
   }
 
   /* 배너 4종 (순서 유지) */
+  /* scale:2 캡처로 PNG가 2x 픽셀 크기 → CSS width로 논리 크기 고정 */
+  var _BN_SIZES = {v200:{w:200,h:275},v170:{w:170,h:235},strip:{w:940,h:80},news:{w:535,h:274}};
   ['v200','v170','strip','news'].forEach(function(t){
     var b = pvData.banners[t];
     if(!b || !b.url) return;
@@ -4336,6 +4342,8 @@ function initPreviewMode(){
     lbl.className = 'pv-img-label'; lbl.textContent = b.label || t;
     var img = document.createElement('img');
     img.src = b.url; img.className = 'pv-img';
+    var sz = _BN_SIZES[t];
+    if(sz){ img.style.width = sz.w+'px'; img.style.height = sz.h+'px'; img.style.maxWidth = 'none'; }
     wrap.appendChild(lbl); wrap.appendChild(img);
     cont.appendChild(wrap);
   });
