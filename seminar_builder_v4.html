@@ -3986,11 +3986,15 @@ function _h2cOpts(){
       if(doc.documentElement) doc.documentElement.style.width='1400px';
       if(doc.body) doc.body.style.width='1400px';
 
-      /* ── [Fix2] guide-root: box-shadow 제거 (캡처 경계에서 잘려 테두리처럼 보이는 버그) ── */
+      /* ── [Fix2] guide-root: box-shadow 제거 + guide 내부 인라인 box-shadow도 모두 제거 ── */
       var gr = doc.getElementById('guide-root');
       if(gr){
         gr.classList.remove('ed-mode');
         gr.style.boxShadow = 'none';
+        /* 카드 등 자식 요소 인라인 box-shadow → html2canvas에서 진하게 렌더되는 버그 방지 */
+        gr.querySelectorAll('[style*="box-shadow"]').forEach(function(el){
+          el.style.boxShadow = 'none';
+        });
       }
 
       /* ── 에디터 전용 UI 숨김 ── */
@@ -4003,21 +4007,35 @@ function _h2cOpts(){
 
       /* ── [Fix3] placeholder 완전 제거: data-ph 속성 삭제 → content:attr(data-ph) 무력화 ── */
       doc.querySelectorAll('[data-ph]').forEach(function(el){ el.removeAttribute('data-ph'); });
-      var noPhStyle = doc.createElement('style');
-      noPhStyle.textContent = '.ed::before{content:none!important;display:none!important;}';
-      doc.head.appendChild(noPhStyle);
+      /* CSS ::before / :has() / :empty 셀렉터가 html2canvas 미지원이므로 JS로 직접 강제 처리 */
+      var extraStyle = doc.createElement('style');
+      extraStyle.textContent = [
+        '.ed::before{content:none!important;display:none!important;}',
+        /* :has(), :empty 미지원 대비 att-wrap/ed-att 직접 숨김 fallback CSS */
+        '#att-wrap{display:none!important;}',
+        '#ed-att{display:none!important;}'
+      ].join('');
+      doc.head.appendChild(extraStyle);
 
-      /* ── 강조 타이틀이 비어있으면 래퍼 통째로 숨김 ── */
+      /* ── 강조 타이틀: 실제 텍스트가 있으면 다시 표시 (inline style > CSS) ── */
       var edAtt = doc.getElementById('ed-att');
-      if(edAtt && !edAtt.textContent.trim()){
-        var attWrap = doc.getElementById('att-wrap');
-        if(attWrap) attWrap.style.display = 'none';
+      var attWrap = doc.getElementById('att-wrap');
+      if(edAtt){
+        /* innerHTML에서 <br>·&nbsp; 제거 후 실제 텍스트 확인 */
+        var rawHtml = edAtt.innerHTML.replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,' ').trim();
+        var hasContent = rawHtml.length > 0;
+        if(hasContent){
+          /* 내용이 있으면 att-wrap/ed-att 복원 */
+          if(attWrap) attWrap.style.setProperty('display','flex','important');
+          edAtt.style.setProperty('display','block','important');
+        }
+        /* 없으면 위 CSS (display:none!important)가 그대로 적용됨 */
       }
 
-      /* ── contenteditable 제거 ── */
+      /* ── contenteditable 제거 + 편집 흔적 제거 ── */
       doc.querySelectorAll('[contenteditable]').forEach(function(el){
         el.removeAttribute('contenteditable');
-        el.style.outline='none'; el.style.boxShadow='none';
+        el.style.outline='none'; el.style.boxShadow='none'; el.style.border='none';
       });
     }
   };
