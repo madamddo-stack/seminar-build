@@ -2845,8 +2845,10 @@ function rbOne(type, html, scale){
 }
 
 /* ── 화살표 SVG 헬퍼 ── */
-function bnArrow(color, size){
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;display:inline-block;vertical-align:middle;">'+
+function bnArrow(color, size, valign){
+  /* valign: 'top' = 고정높이 버튼용(padding-top 방식), 'middle' = pill 버튼용(flex 방식) */
+  var va = valign || 'middle';
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;display:inline-block;vertical-align:'+va+';">'+
     '<path d="M7.5 5L12.5 10L7.5 15" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
   '</svg>';
 }
@@ -2951,12 +2953,12 @@ function rV200(d){
     '<div style="position:absolute;top:129px;left:50%;transform:translateX(-50%);z-index:1;">'+
       bnImg(160, 108, d.img, 'v200')+
     '</div>'+
-    /* 버튼: 하단 고정 — html2canvas용 line-height 수직 중앙 */
-    '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';z-index:3;text-align:center;line-height:38px;overflow:hidden;">'+
-      '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;line-height:1;">'+
-        '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
-        bnArrow(d.btnTc, 20)+
-      '</span>'+
+    /* 버튼: 하단 고정
+       padding-top:(38-20)/2=9px + line-height:0 + vertical-align:top
+       → 폰트 메트릭 무관하게 정확히 수직 중앙 (html2canvas 안전 방식) */
+    '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';z-index:3;text-align:center;box-sizing:border-box;padding-top:9px;line-height:0;overflow:hidden;">'+
+      '<span style="display:inline-block;vertical-align:top;line-height:20px;color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
+      bnArrow(d.btnTc, 20, 'top')+
     '</div>'+
   '</div>';
 }
@@ -2982,12 +2984,11 @@ function rV170(d){
     '<div style="position:absolute;top:131px;left:16px;z-index:1;">'+
       bnImg(131, 68, d.img, 'v170')+
     '</div>'+
-    /* 버튼: 하단 고정 — html2canvas용 line-height 수직 중앙 */
-    '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';z-index:3;text-align:center;line-height:36px;overflow:hidden;">'+
-      '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;line-height:1;">'+
-        '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
-        bnArrow(d.btnTc, 18)+
-      '</span>'+
+    /* 버튼: 하단 고정
+       padding-top:(36-18)/2=9px + line-height:0 + vertical-align:top */
+    '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';z-index:3;text-align:center;box-sizing:border-box;padding-top:9px;line-height:0;overflow:hidden;">'+
+      '<span style="display:inline-block;vertical-align:top;line-height:18px;color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
+      bnArrow(d.btnTc, 18, 'top')+
     '</div>'+
   '</div>';
 }
