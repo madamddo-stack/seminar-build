@@ -156,7 +156,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
   align-items:center;
   padding:40px 32px 80px;
 }
-#canvas-area .editor-wrap{padding:0;}
+#canvas-area .editor-wrap{padding:0;overflow:hidden;} /* overflow:hidden → guide-root 가로 클립 */
 #canvas-area #banner-page{
   background:transparent;
   width:100%;
@@ -4537,8 +4537,9 @@ function fitGuideRoot(){
   var ew = eid('editor-wrap-id');
   var gr = eid('guide-root');
   if(!ew || !gr) return;
-  /* editor-wrap 전체 너비 - 좌우 padding(24px×2) = guide-root 가용 너비 */
-  var availW = ew.clientWidth - 48;
+  /* #canvas-area .editor-wrap { padding:0 } 덮어쓰기로 실제 padding=0
+     → clientWidth 그대로가 guide-root 가용 너비 */
+  var availW = ew.clientWidth;
   var grW = 900;
   if(availW <= 0) return; /* 레이아웃 미확정 시 스킵 */
   if(availW >= grW){
@@ -4571,7 +4572,9 @@ function fitGuideRoot(){
   initBnImgCtrls();
 
   /* 안내문 미리보기 자동 스케일 초기화 + ResizeObserver
-     ※ requestAnimationFrame: 첫 렌더 후 clientWidth 확정 타이밍 보장 */
+     ① 즉시 실행 (동기): CSS/DOM 파싱 후 clientWidth 읽어 초기 zoom 적용
+     ② rAF: 첫 paint 후 레이아웃 확정치로 재보정 */
+  fitGuideRoot();
   requestAnimationFrame(function(){
     fitGuideRoot();
     if(window.ResizeObserver){
