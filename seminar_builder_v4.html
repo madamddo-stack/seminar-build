@@ -2470,7 +2470,8 @@ function applyLogoMode(dark){
 }
 
 function applyBg(v){
-  eid('guide-root').style.background = v;
+  var gr = eid('guide-root');
+  if(gr){ gr.style.background = v; gr.style.backgroundColor = v; }
   eid('sw-bg').style.background = v;
   syncSwInput('sw-bg', v);
   applyLogoMode(_isDarkHex(v));
@@ -3972,14 +3973,43 @@ function saveCtx(){
 
 /* onclone 공통 옵션: 에디터 UI 제거 + 외부 CSS 차단 */
 function _h2cOpts(){
+  /* 원본 guide-root 배경색 미리 읽기 (onclone 전에 실행) */
+  var origGr = eid('guide-root');
+  var origBg = origGr ? (origGr.style.background || origGr.style.backgroundColor || window.getComputedStyle(origGr).backgroundColor) : null;
+
   return {
     scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
     onclone: function(doc){
       doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
+
+      /* ── guide-root: ed-mode 제거 + 배경색 명시 복원 ── */
       var gr = doc.getElementById('guide-root');
-      if(gr) gr.classList.remove('ed-mode');
+      if(gr){
+        gr.classList.remove('ed-mode');
+        if(origBg) gr.style.background = origBg;
+      }
+
+      /* ── 에디터 전용 UI 숨김 ── */
       var HIDE = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.bn-img-ctrl,#edit-hint';
       doc.querySelectorAll(HIDE).forEach(function(el){ el.style.display='none'; });
+
+      /* ── 일러스트 placeholder 아이콘 숨김 ── */
+      var ilPh = doc.getElementById('il-placeholder');
+      if(ilPh) ilPh.style.display = 'none';
+
+      /* ── placeholder(::before) 비활성화 CSS 주입 ── */
+      var noPhStyle = doc.createElement('style');
+      noPhStyle.textContent = '.ed:empty::before,.ed::before{content:none!important;display:none!important;}';
+      doc.head.appendChild(noPhStyle);
+
+      /* ── 강조 타이틀이 비어있으면 래퍼 통째로 숨김 ── */
+      var edAtt = doc.getElementById('ed-att');
+      if(edAtt && !edAtt.textContent.trim()){
+        var attWrap = doc.getElementById('att-wrap');
+        if(attWrap) attWrap.style.display = 'none';
+      }
+
+      /* ── contenteditable 제거 ── */
       doc.querySelectorAll('[contenteditable]').forEach(function(el){
         el.removeAttribute('contenteditable');
         el.style.outline='none'; el.style.boxShadow='none';
