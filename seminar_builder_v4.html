@@ -3978,6 +3978,21 @@ function _h2cOpts(){
     onclone: function(doc){
       doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
 
+      /* ── [Fix1] 부모 overflow 클리핑 해제: clone 렌더링 시 guide-root 잘림 방지 ── */
+      var ca = doc.getElementById('canvas-area');
+      if(ca){ ca.style.overflow='visible'; ca.style.width='1400px'; }
+      var ew = doc.getElementById('editor-wrap-id');
+      if(ew){ ew.style.overflow='visible'; ew.style.minWidth='900px'; }
+      if(doc.documentElement) doc.documentElement.style.width='1400px';
+      if(doc.body) doc.body.style.width='1400px';
+
+      /* ── [Fix2] guide-root: box-shadow 제거 (캡처 경계에서 잘려 테두리처럼 보이는 버그) ── */
+      var gr = doc.getElementById('guide-root');
+      if(gr){
+        gr.classList.remove('ed-mode');
+        gr.style.boxShadow = 'none';
+      }
+
       /* ── 에디터 전용 UI 숨김 ── */
       var HIDE = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.bn-img-ctrl,#edit-hint';
       doc.querySelectorAll(HIDE).forEach(function(el){ el.style.display='none'; });
@@ -3986,9 +4001,10 @@ function _h2cOpts(){
       var ilPh = doc.getElementById('il-placeholder');
       if(ilPh) ilPh.style.display = 'none';
 
-      /* ── placeholder(::before) 비활성화 CSS 주입 ── */
+      /* ── [Fix3] placeholder 완전 제거: data-ph 속성 삭제 → content:attr(data-ph) 무력화 ── */
+      doc.querySelectorAll('[data-ph]').forEach(function(el){ el.removeAttribute('data-ph'); });
       var noPhStyle = doc.createElement('style');
-      noPhStyle.textContent = '.ed:empty::before,.ed::before{content:none!important;display:none!important;}';
+      noPhStyle.textContent = '.ed::before{content:none!important;display:none!important;}';
       doc.head.appendChild(noPhStyle);
 
       /* ── 강조 타이틀이 비어있으면 래퍼 통째로 숨김 ── */
