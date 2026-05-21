@@ -3105,7 +3105,8 @@ function toBlob(type){
             stageEl.parentElement.style.height = savedWrapH;
           }
         }
-        html2canvas(el, { scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false })
+        /* scale:1 → 스펙 픽셀 크기 그대로 출력 (200×275 등) */
+        html2canvas(el, { scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false })
           .then(function(canvas){ restore(); resolve(canvas); })
           .catch(function(e){ restore(); reject(e); });
       });
@@ -4166,7 +4167,7 @@ function saveBannerCapture(){
   if(bpHidden){ bp.style.cssText='display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
   var TYPES  = ['v200','v170','strip','news'];
   var LABELS = {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
-  var opts   = { scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false };
+  var opts   = { scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false };
   var done   = 0; var total = 0;
   TYPES.forEach(function(t){ if(eid('bn-stage-'+t)) total++; });
   if(!total){
@@ -4331,8 +4332,6 @@ function initPreviewMode(){
   }
 
   /* 배너 4종 (순서 유지) */
-  /* scale:2 캡처로 PNG가 2x 픽셀 크기 → CSS width로 논리 크기 고정 */
-  var _BN_SIZES = {v200:{w:200,h:275},v170:{w:170,h:235},strip:{w:940,h:80},news:{w:535,h:274}};
   ['v200','v170','strip','news'].forEach(function(t){
     var b = pvData.banners[t];
     if(!b || !b.url) return;
@@ -4343,8 +4342,6 @@ function initPreviewMode(){
     lbl.className = 'pv-img-label'; lbl.textContent = b.label || t;
     var img = document.createElement('img');
     img.src = b.url; img.className = 'pv-img';
-    var sz = _BN_SIZES[t];
-    if(sz){ img.style.width = sz.w+'px'; img.style.height = sz.h+'px'; img.style.maxWidth = 'none'; }
     wrap.appendChild(lbl); wrap.appendChild(img);
     cont.appendChild(wrap);
   });
