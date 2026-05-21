@@ -3982,6 +3982,15 @@ function _h2cOpts(){
     onclone: function(doc){
       doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
 
+      /* ── 부모 overflow 클리핑 제거: canvas-area overflow:hidden이 guide-root를 자르는 버그 방지 ── */
+      var ca = doc.getElementById('canvas-area');
+      if(ca){ ca.style.overflow='visible'; ca.style.width='1200px'; }
+      var ew = doc.getElementById('editor-wrap-id');
+      if(ew){ ew.style.overflow='visible'; ew.style.minWidth='900px'; }
+      /* html/body 너비도 확보 */
+      if(doc.documentElement) doc.documentElement.style.width='1200px';
+      if(doc.body) doc.body.style.width='1200px';
+
       /* ── guide-root: ed-mode 제거 + zoom 리셋 + 배경색 명시 복원 ── */
       var gr = doc.getElementById('guide-root');
       if(gr){
