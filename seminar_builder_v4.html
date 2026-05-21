@@ -2846,7 +2846,7 @@ function rbOne(type, html, scale){
 
 /* ── 화살표 SVG 헬퍼 ── */
 function bnArrow(color, size){
-  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;display:block;">'+
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;display:inline-block;vertical-align:middle;">'+
     '<path d="M7.5 5L12.5 10L7.5 15" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'+
   '</svg>';
 }
@@ -2953,7 +2953,7 @@ function rV200(d){
     '</div>'+
     /* 버튼: 하단 고정 */
     '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
-      '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+escHtml(d.btnTxt)+'</span>'+
+      '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
       bnArrow(d.btnTc, 20)+
     '</div>'+
   '</div>';
@@ -2982,7 +2982,7 @@ function rV170(d){
     '</div>'+
     /* 버튼: 하단 고정 */
     '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';display:flex;align-items:center;justify-content:center;gap:4px;z-index:3;">'+
-      '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+escHtml(d.btnTxt)+'</span>'+
+      '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
       bnArrow(d.btnTc, 18)+
     '</div>'+
   '</div>';
@@ -3026,7 +3026,7 @@ function rStrip(d){
     '<div style="margin-left:194px;flex:1;display:flex;align-items:center;gap:14px;overflow:hidden;z-index:2;">'+
       '<div style="flex:1;font-size:'+titSz+'px;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;line-height:1.2;">'+titleInner+'</div>'+
       '<div style="background:'+d.btnBg+';border-radius:30px;display:flex;align-items:center;justify-content:center;padding:9px 14px;gap:6px;flex-shrink:0;">'+
-        '<span style="color:'+d.btnTc+';font-size:18px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+escHtml(d.btnTxt)+'</span>'+
+        '<span style="color:'+d.btnTc+';font-size:18px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 21)+
       '</div>'+
     '</div>'+
@@ -3062,7 +3062,7 @@ function rNews(d){
         '<div style="font-size:24px;font-weight:400;color:'+d.subClr+';line-height:1.2;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;">'+escHtml(hash1)+'&ensp;'+escHtml(hash2)+'</div>'+
       '</div>'+
       '<div style="display:inline-flex;align-items:center;justify-content:center;background:'+d.btnBg+';border-radius:60px;padding:9px 18px;gap:4px;flex-shrink:0;">'+
-        '<span style="color:'+d.btnTc+';font-size:24px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;">'+escHtml(d.btnTxt)+'</span>'+
+        '<span style="color:'+d.btnTc+';font-size:24px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 32)+
       '</div>'+
     '</div>'+
@@ -3085,9 +3085,26 @@ function toBlob(type){
     var stageEl = eid('bn-stage-'+type);
     var el = stageEl && stageEl.firstElementChild;
     if(!el){ return reject(new Error('배너 없음')); }
-    html2canvas(el, { scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false })
-      .then(resolve)
-      .catch(reject);
+    /* guide-root zoom 제거와 동일: getBoundingClientRect()가 transform 영향 받지 않도록
+       캡처 전 transform 제거 → 캡처 후 복원 */
+    var savedTransform = stageEl.style.transform || '';
+    var savedWrapW = stageEl.parentElement ? stageEl.parentElement.style.width : '';
+    var savedWrapH = stageEl.parentElement ? stageEl.parentElement.style.height : '';
+    stageEl.style.transform = 'none';
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        function restore(){
+          stageEl.style.transform = savedTransform;
+          if(stageEl.parentElement){
+            stageEl.parentElement.style.width  = savedWrapW;
+            stageEl.parentElement.style.height = savedWrapH;
+          }
+        }
+        html2canvas(el, { scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false })
+          .then(function(canvas){ restore(); resolve(canvas); })
+          .catch(function(e){ restore(); reject(e); });
+      });
+    });
   });
 }
 
@@ -4132,7 +4149,9 @@ function saveGuideCapture(){
   });
 }
 
-/* 배너 저장: html2canvas 4종 → PNG Blob → 메모리 */
+/* 배너 저장: html2canvas 4종 → PNG Blob → 메모리
+   guide-root zoom 과 동일한 원리: CSS transform이 getBoundingClientRect()에 영향을 줌.
+   캡처 전 bn-stage transform 제거 → bn-canvas(firstElementChild) 캡처 → 복원 */
 function saveBannerCapture(){
   var btn = eid('btn-save-ctx');
   if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
@@ -4142,7 +4161,7 @@ function saveBannerCapture(){
   if(bpHidden){ bp.style.cssText='display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
   var TYPES  = ['v200','v170','strip','news'];
   var LABELS = {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
-  var opts   = _h2cOpts();
+  var opts   = { scale:2, useCORS:true, allowTaint:false, backgroundColor:null, logging:false };
   var done   = 0; var total = 0;
   TYPES.forEach(function(t){ if(eid('bn-stage-'+t)) total++; });
   if(!total){
@@ -4156,19 +4175,42 @@ function saveBannerCapture(){
     if(btn){btn.disabled=false;btn.textContent='배너 저장';}
     showToast('✅ 배너 저장 완료');
   }
-  TYPES.forEach(function(t){
+  /* 4종 순차 캡처: 각 배너마다 transform 제거→캡처→복원 */
+  var queue = TYPES.filter(function(t){ return !!eid('bn-stage-'+t); });
+  function captureNext(idx){
+    if(idx >= queue.length) return;
+    var t = queue[idx];
     var stage = eid('bn-stage-'+t);
-    if(!stage) return;
-    _h2c(stage, opts, 15000)
-      .then(function(canvas){
-        canvas.toBlob(function(blob){
-          if(window._pvData.banners[t]) URL.revokeObjectURL(window._pvData.banners[t].url);
-          window._pvData.banners[t] = { url: URL.createObjectURL(blob), label: LABELS[t] };
-          tick();
-        }, 'image/png');
-      })
-      .catch(function(e){ console.error('배너 캡처:',t,e); tick(); });
-  });
+    var el    = stage && stage.firstElementChild;
+    if(!el){ tick(); captureNext(idx+1); return; }
+    var savedTr  = stage.style.transform || '';
+    var savedW   = stage.parentElement ? stage.parentElement.style.width  : '';
+    var savedH   = stage.parentElement ? stage.parentElement.style.height : '';
+    stage.style.transform = 'none';
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        function restore(){
+          stage.style.transform = savedTr;
+          if(stage.parentElement){
+            stage.parentElement.style.width  = savedW;
+            stage.parentElement.style.height = savedH;
+          }
+        }
+        _h2c(el, opts, 15000)
+          .then(function(canvas){
+            restore();
+            canvas.toBlob(function(blob){
+              if(window._pvData.banners[t]) URL.revokeObjectURL(window._pvData.banners[t].url);
+              window._pvData.banners[t] = { url: URL.createObjectURL(blob), label: LABELS[t] };
+              tick();
+              captureNext(idx+1);
+            }, 'image/png');
+          })
+          .catch(function(e){ restore(); console.error('배너 캡처:',t,e); tick(); captureNext(idx+1); });
+      });
+    });
+  }
+  captureNext(0);
 }
 
 /* 미리보기: 저장된 데이터 있으면 새 탭 오픈 */
