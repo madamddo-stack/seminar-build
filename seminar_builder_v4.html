@@ -2544,6 +2544,9 @@ function applyTitSwap(swapped){
 function clearAttTitle(){
   var att = eid('ed-att'); if(!att) return;
   att.innerHTML = '';
+  /* 에디터에서도 즉시 영역 숨김 (새로고침하면 기본값으로 복원) */
+  var wrap = eid('att-wrap');
+  if(wrap) wrap.style.display = 'none';
   scheduleAutoSave();
 }
 /* applyAttC 역할은 applyMain 으로 통합됨 */
