@@ -150,13 +150,13 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 
 /* ─── v4 캔버스 영역 ─────────────────────────── */
 #canvas-area{
-  flex:1;overflow:auto;
+  flex:1;overflow-x:hidden;overflow-y:auto; /* x:hidden → guide-root 가로 넘침 차단 */
   background:var(--bg-app);
   display:flex;flex-direction:column;
-  align-items:center;
+  align-items:stretch; /* center→stretch: 자식이 항상 100% 너비를 가짐 */
   padding:40px 32px 80px;
 }
-#canvas-area .editor-wrap{padding:0;overflow:hidden;} /* overflow:hidden → guide-root 가로 클립 */
+#canvas-area .editor-wrap{padding:0;display:flex;justify-content:center;overflow:hidden;}
 #canvas-area #banner-page{
   background:transparent;
   width:100%;
@@ -319,7 +319,6 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .editor-wrap{
   display:flex;justify-content:center;
   padding:32px 24px 64px;
-  width:100%;box-sizing:border-box; /* canvas-area align-items:center shrink-wrap 방지 */
 }
 
 /* ─── 가이드 루트 ──────────────────────────────── */
