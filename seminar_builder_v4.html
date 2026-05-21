@@ -3971,33 +3971,12 @@ function saveCtx(){
   else saveGuideCapture();
 }
 
-/* onclone 공통 옵션: 에디터 UI 제거 + 외부 CSS 차단 */
+/* 공통 캡처 옵션: 에디터 UI 제거 + 외부 CSS 차단 (zoom 이슈는 saveGuideCapture에서 live DOM으로 처리) */
 function _h2cOpts(){
-  /* 원본 guide-root 배경색 미리 읽기 (onclone 전에 실행) */
-  var origGr = eid('guide-root');
-  var origBg = origGr ? (origGr.style.background || origGr.style.backgroundColor || window.getComputedStyle(origGr).backgroundColor) : null;
-
   return {
     scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
     onclone: function(doc){
       doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
-
-      /* ── 부모 overflow 클리핑 제거: canvas-area overflow:hidden이 guide-root를 자르는 버그 방지 ── */
-      var ca = doc.getElementById('canvas-area');
-      if(ca){ ca.style.overflow='visible'; ca.style.width='1200px'; }
-      var ew = doc.getElementById('editor-wrap-id');
-      if(ew){ ew.style.overflow='visible'; ew.style.minWidth='900px'; }
-      /* html/body 너비도 확보 */
-      if(doc.documentElement) doc.documentElement.style.width='1200px';
-      if(doc.body) doc.body.style.width='1200px';
-
-      /* ── guide-root: ed-mode 제거 + zoom 리셋 + 배경색 명시 복원 ── */
-      var gr = doc.getElementById('guide-root');
-      if(gr){
-        gr.classList.remove('ed-mode');
-        gr.style.zoom = '';          /* 캡처는 항상 900px 원본 크기로 */
-        if(origBg) gr.style.background = origBg;
-      }
 
       /* ── 에디터 전용 UI 숨김 ── */
       var HIDE = '.ov-type-bar,.chk-add-area,.chk-del-btn,.add-row-area,.row-ctrl,.tit-ctrl,.img-overlay,.img-upload-btn,.logo-change-btn,.bn-img-ctrl,#edit-hint';
@@ -4028,26 +4007,49 @@ function _h2cOpts(){
   };
 }
 
-/* 안내문 저장: html2canvas → PNG Blob → 메모리 (용량 제한 없음) */
+/* 안내문 저장: html2canvas → PNG Blob → 메모리
+   ★ zoom을 live DOM에서 직접 해제 후 캡처 → html2canvas bounding rect가 900px로 잡힘
+      onclone에서 zoom 제거 시 bounding rect는 이미 zoomed 값으로 고정되어 오른쪽이 잘리는 버그 방지 */
 function saveGuideCapture(){
   var btn = eid('btn-save-ctx');
   if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
   var gr = eid('guide-root');
   if(!gr){ if(btn){btn.disabled=false;btn.textContent='안내문 저장';} return; }
-  _h2c(gr, _h2cOpts(), 30000)
-    .then(function(canvas){
-      canvas.toBlob(function(blob){
-        if(window._pvData.guide) URL.revokeObjectURL(window._pvData.guide.url);
-        window._pvData.guide = { url: URL.createObjectURL(blob), ts: Date.now() };
-        showToast('✅ 안내문 저장 완료');
-        if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
-      }, 'image/png');
-    })
-    .catch(function(e){
-      console.error('안내문 캡처:', e);
-      showToast('안내문 캡처 실패', true);
-      if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+
+  /* ① live DOM에서 zoom 해제 + ed-mode 제거 */
+  var savedZoom = gr.style.zoom || '';
+  var hadEdMode = gr.classList.contains('ed-mode');
+  gr.style.zoom = '';
+  gr.classList.remove('ed-mode');
+
+  /* ② 두 번의 rAF로 레이아웃 확정 후 캡처 */
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+
+      function restore(){
+        gr.style.zoom = savedZoom;
+        if(hadEdMode) gr.classList.add('ed-mode');
+        fitGuideRoot();
+      }
+
+      _h2c(gr, _h2cOpts(), 30000)
+        .then(function(canvas){
+          restore();
+          canvas.toBlob(function(blob){
+            if(window._pvData.guide) URL.revokeObjectURL(window._pvData.guide.url);
+            window._pvData.guide = { url: URL.createObjectURL(blob), ts: Date.now() };
+            showToast('✅ 안내문 저장 완료');
+            if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+          }, 'image/png');
+        })
+        .catch(function(e){
+          restore();
+          console.error('안내문 캡처:', e);
+          showToast('안내문 캡처 실패', true);
+          if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+        });
     });
+  });
 }
 
 /* 배너 저장: html2canvas 4종 → PNG Blob → 메모리 */
