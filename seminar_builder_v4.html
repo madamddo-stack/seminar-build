@@ -319,6 +319,7 @@ body{font-family:'Pretendard','Noto Sans KR',sans-serif;background:#F9FAFB;heigh
 .editor-wrap{
   display:flex;justify-content:center;
   padding:32px 24px 64px;
+  width:100%;box-sizing:border-box; /* canvas-area align-items:center shrink-wrap 방지 */
 }
 
 /* ─── 가이드 루트 ──────────────────────────────── */
@@ -4531,14 +4532,15 @@ function clearHistory(){
   renderHistory();
 }
 
-/* ── 안내문 미리보기 자동 스케일 (canvas-area 너비에 맞게 guide-root zoom) ── */
+/* ── 안내문 미리보기 자동 스케일 (editor-wrap 너비에 맞게 guide-root zoom) ── */
 function fitGuideRoot(){
-  var ca = eid('canvas-area');
+  var ew = eid('editor-wrap-id');
   var gr = eid('guide-root');
-  if(!ca || !gr) return;
-  /* canvas-area padding(32px×2) + editor-wrap padding(24px×2) */
-  var availW = ca.clientWidth - 64 - 48;
+  if(!ew || !gr) return;
+  /* editor-wrap 전체 너비 - 좌우 padding(24px×2) = guide-root 가용 너비 */
+  var availW = ew.clientWidth - 48;
   var grW = 900;
+  if(availW <= 0) return; /* 레이아웃 미확정 시 스킵 */
   if(availW >= grW){
     gr.style.zoom = '';
   } else {
@@ -4568,13 +4570,16 @@ function fitGuideRoot(){
   /* 배너 이미지 컨트롤 UI 초기화 */
   initBnImgCtrls();
 
-  /* 안내문 미리보기 자동 스케일 초기화 + ResizeObserver */
-  fitGuideRoot();
-  if(window.ResizeObserver){
-    var _grObs = new ResizeObserver(function(){ fitGuideRoot(); });
-    var ca = eid('canvas-area');
-    if(ca) _grObs.observe(ca);
-  }
+  /* 안내문 미리보기 자동 스케일 초기화 + ResizeObserver
+     ※ requestAnimationFrame: 첫 렌더 후 clientWidth 확정 타이밍 보장 */
+  requestAnimationFrame(function(){
+    fitGuideRoot();
+    if(window.ResizeObserver){
+      var _grObs = new ResizeObserver(function(){ fitGuideRoot(); });
+      var ew = eid('editor-wrap-id');
+      if(ew) _grObs.observe(ew);
+    }
+  });
 
 })();
 </script>
