@@ -1,4 +1,34 @@
-# 세미나 빌더 — 개발 스펙
+# 세미나 빌더 — 개발 & Claude 작업 가이드
+
+**파일**: `seminar_builder_v4.html` (단일 파일)  
+**배포**: https://seminar-build.vercel.app  
+**GitHub**: madamddo-stack/seminar-build (main push → Vercel 자동 배포)
+
+---
+
+## 문서 구조
+
+| 파일 | 내용 |
+|------|------|
+| [PRD.md](PRD.md) | 제품 개요, 사용자 시나리오, 기능 요구사항, 백로그 |
+| [design.md](design.md) | 폰트·색상·안내문·배너 레이아웃 스펙 |
+| [skill.md](skill.md) | 기술 스택, JS 함수 맵, html2canvas 원리, 작업 주의사항 |
+
+---
+
+## Claude 작업 시 핵심 주의사항
+
+1. **html2canvas 캡처 전 transform/zoom 반드시 제거**  
+   `getBoundingClientRect()`가 시각적 크기로 읽히는 문제 → 제거 후 캡처, 복원 패턴 유지
+
+2. **html2canvas 미지원 CSS 우회**  
+   `filter:invert`, `:has()`, `:empty`, `flex align-items:center` (position:absolute 내부) — 아래 섹션 참고
+
+3. **배너 버튼 수직 정렬은 padding-top 방식 고수**  
+   flex 대신 `padding-top + line-height:0 + vertical-align:top`
+
+4. **히스토리 자동 저장 트리거**  
+   안내문 저장 + 배너 저장 **양쪽 완료** 시 `saveHistory()` 자동 호출
 
 ---
 
@@ -13,13 +43,6 @@
 | 클립보드 | ClipboardItem API |
 | 배포 | Vercel (GitHub 연동, main 브랜치 push → 자동 배포) |
 
-```
-외부 CDN 의존성:
-  - Paperlogy 폰트
-  - Google Fonts (Lexend, Source Sans 3, Noto Sans KR)
-  - html2canvas 1.4.1
-```
-
 ---
 
 ## 파일 구조
@@ -30,9 +53,9 @@ seminar-builder/
 ├── vercel.json               ← "/" → v4.html 리다이렉트
 ├── img/
 │   └── bi_jk.svg             ← 잡코리아 로고
-├── 기획.md
-├── 디자인.md
-└── 개발.md
+├── PRD.md
+├── design.md
+└── skill.md
 ```
 
 ---
@@ -41,10 +64,10 @@ seminar-builder/
 
 ```
 [상단 탭바 (#topbar)]
-  로고 | 프로젝트명 입력 | (우측) 안내문/배너 저장 | 미리보기 | 다운로드
+  로고 | 프로젝트명 입력 | 안내문/배너 저장 | 미리보기 | 다운로드
 
 [좌측 레일 (#left-rail)]
-  📄 안내문 | 🖼 배너 | 📋 히스토리
+  안내문 | 배너 | 히스토리
 
 [안내문 페이지 (#guide-page)]
   좌측 사이드바 (304px) — 서브탭: 로고/뱃지 | 타이틀 | 이미지 | 개요 | 상세 | 디자인
@@ -96,123 +119,109 @@ seminar-builder/
 
 | 함수 | 역할 |
 |------|------|
-| `saveCtx()` | 현재 페이지 저장 (안내문이면 Guide, 배너이면 Banner) |
+| `saveCtx()` | 현재 페이지 저장 (안내문/배너 분기) |
 | `saveGuideCapture()` | 안내문 PNG → `_pvData.guide` |
-| `saveBannerCapture()` | 배너 4종 PNG → `_pvData.banners` |
-| `toBlob(type)` | 개별 배너 html2canvas → Blob (다운로드/클립보드용) |
+| `saveBannerCapture()` | 배너 4종 PNG → `_pvData.banners` (순차 처리) |
+| `toBlob(type)` | 개별 배너 html2canvas → Blob |
 | `pngSaveBanner(type)` | 배너 PNG 파일 저장 |
 | `pngCopyBanner(type)` | 배너 PNG 클립보드 복사 |
 | `pngSaveAll()` | 배너 4종 순차 저장 |
 | `dlGuidePng()` | 안내문 PNG 다운로드 |
 | `openPreview()` | 미리보기 새 탭 오픈 |
 
-### 히스토리
+### 히스토리 / Draft
 
 | 함수 | 역할 |
 |------|------|
 | `saveHistory()` | 현재 상태 localStorage 저장 (`sb_history_v1`, 최대 50건) |
-| `loadHistList()` | 히스토리 목록 로드 |
 | `renderHistory()` | 히스토리 카드 렌더 |
-| `restoreHistory(id)` | 히스토리 불러오기 (설정 전체 복원) |
+| `restoreHistory(id)` | 히스토리 불러오기 |
 | `deleteHistory(id)` | 히스토리 항목 삭제 |
-
-### 자동저장 (Draft)
-
-| 함수 | 역할 |
-|------|------|
-| `saveDraft()` | 편집 상태 localStorage 자동저장 (`sb_draft_v1`) |
-| `scheduleAutoSave()` | 1.5초 debounce 후 saveDraft 실행 |
+| `saveDraft()` | 편집 상태 자동저장 (`sb_draft_v1`) |
+| `scheduleAutoSave()` | 1.5초 debounce 후 saveDraft |
 | `restoreDraft()` | 이전 작업 복원 |
-| `checkDraftOnLoad()` | 히스토리 탭 진입 시 draft 복원 배너 표시 |
 
 ---
 
-## html2canvas 캡처 핵심 원리
+## html2canvas 캡처 원리
 
 ### 안내문 캡처 (`saveGuideCapture`)
 
 ```
-① _buildInvertedLogoMap() — 다크모드 logo filter:invert를
-   html2canvas가 지원 안 하므로 canvas2d로 미리 반전 data URL 생성
+① _buildInvertedLogoMap()
+   다크모드 로고 filter:invert → html2canvas 미지원
+   → canvas2d로 미리 반전 data URL 생성
 
-② guide-root의 zoom 제거 (live DOM)
+② guide-root zoom 제거 (live DOM)
    → getBoundingClientRect()가 900px 그대로 읽힘
-   → 캡처 후 zoom 복원
+   → 캡처 완료 후 zoom 복원
 
-③ requestAnimationFrame × 2 — 레이아웃 반영 대기 후 html2canvas 실행
+③ requestAnimationFrame × 2 — 레이아웃 반영 대기
 
 ④ onclone 콜백:
    - canvas-area overflow:visible (클립 방지)
    - guide-root box-shadow 제거
-   - 다크 로고 src를 반전 data URL로 교체
+   - 다크 로고 src → 반전 data URL 교체
    - 에디터 UI 요소 숨김 (.ov-type-bar, .img-overlay 등)
-   - att-wrap 빈 경우 DOM에서 물리 제거 (CSS :has 미지원 대응)
+   - att-wrap 빈 경우 DOM 물리 제거 (CSS :has 미지원 대응)
    - contenteditable 속성 제거
 ```
 
 ### 배너 캡처 (`saveBannerCapture`, `toBlob`)
 
 ```
-① bn-stage의 transform:scale 제거 (live DOM)
+① bn-stage transform:scale 제거 (live DOM)
    → getBoundingClientRect()가 자연 크기로 읽힘 (200×275 등)
-   → 캡처 후 transform 복원
+   → 캡처 완료 후 transform 복원
 
-② bn-stage.firstElementChild (bn-canvas) 를 캡처 대상으로 사용
+② bn-stage.firstElementChild (bn-canvas) 캡처
 
-③ scale:1 → 스펙 픽셀 크기 그대로 출력 (200×275px PNG)
+③ scale:1 → 스펙 픽셀 크기 그대로 출력
 
 ④ 4종 순차 처리 (transform 제거/복원 충돌 방지)
 ```
 
-### 알려진 html2canvas 한계
+### html2canvas 알려진 한계 및 해결책
 
 | 현상 | 원인 | 해결책 |
 |------|------|--------|
-| CSS `filter:invert()` 이미지에 미적용 | html2canvas 미지원 | canvas2d로 pre-invert |
-| CSS `:has()`, `:empty` 미작동 | html2canvas 미지원 | JS로 DOM 직접 조작 |
-| `position:absolute` 요소의 `flex align-items:center` 오적용 | 렌더러 한계 | `padding-top` + `line-height` + `vertical-align:top` 방식으로 대체 |
-| `transform:scale` 적용 시 캡처 크기 왜곡 | getBoundingClientRect가 시각적 크기 반환 | 캡처 전 transform 제거 후 복원 |
-| `box-shadow` 과도하게 렌더 | 브라우저와 렌더링 차이 | onclone에서 box-shadow 제거 |
+| `filter:invert()` 이미지 미적용 | html2canvas 미지원 | canvas2d pre-invert |
+| `:has()`, `:empty` 미작동 | html2canvas 미지원 | JS DOM 직접 조작 |
+| `position:absolute` 내 `flex align-items:center` 오작동 | 렌더러 한계 | `padding-top + line-height:0 + vertical-align:top` |
+| `transform:scale` 캡처 크기 왜곡 | getBoundingClientRect 시각적 크기 반환 | 캡처 전 transform 제거 후 복원 |
+| `box-shadow` 과도 렌더 | 브라우저와 렌더링 차이 | onclone에서 box-shadow 제거 |
 
 ---
 
-## 배너 버튼 수직 정렬 구현 원칙
+## 배너 버튼 수직 정렬 원칙
 
-고정 높이 버튼(v200: 38px, v170: 36px)은 flex 대신 아래 방식 사용:
+고정 높이 버튼(v200: 38px, v170: 36px)은 **flex 사용 금지**, 아래 방식 사용:
 
 ```html
-<!-- 예: v200 버튼 -->
-<div style="height:38px; padding-top:9px; line-height:0; text-align:center; box-sizing:border-box;">
-  <span style="display:inline-block; vertical-align:top; line-height:20px;">버튼 텍스트</span>
-  <svg style="display:inline-block; vertical-align:top;"><!-- 화살표 --></svg>
+<div style="height:38px; padding-top:9px; line-height:0;
+            text-align:center; box-sizing:border-box; overflow:hidden;">
+  <span style="display:inline-block; vertical-align:top; line-height:20px;">텍스트</span>
+  <svg style="display:inline-block; vertical-align:top;">...</svg>
 </div>
 ```
 
-계산식: `padding-top = (버튼 높이 - SVG 높이) / 2`
-- v200: (38 - 20) / 2 = 9px
-- v170: (36 - 18) / 2 = 9px
+**계산식**: `padding-top = (버튼 높이 - SVG 높이) / 2`
+- v200: (38 - 20) / 2 = **9px**
+- v170: (36 - 18) / 2 = **9px**
 
-pill 버튼(strip, news)은 `padding:9px 14px` 방식으로 자연 중앙 정렬.
+pill 버튼(strip, news)은 `padding:9px 14px`으로 자연 중앙 정렬.
 
 ---
 
-## 로컬 실행
+## 로컬 실행 / 배포
 
 ```bash
-# Python으로 로컬 서버
+# 로컬
 python3 -m http.server 3000
-# → http://localhost:3000
 
-# 또는 npx serve
-npx serve .
-```
-
-## 배포
-
-```bash
+# 배포 (Vercel 자동)
 git add seminar_builder_v4.html
 git commit -m "..."
 git push origin main
-# → Vercel 자동 배포 (1~2분 소요)
-# → https://seminar-build.vercel.app
+# → https://seminar-build.vercel.app (1~2분 소요)
 ```
