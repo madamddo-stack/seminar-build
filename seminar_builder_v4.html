@@ -3928,9 +3928,14 @@ function collectPreviewState(){
     partnerSrc: '',
     html:{}, bnf:{}
   };
-  /* 편집 요소 innerHTML */
+  /* 편집 요소 innerHTML (ed-att가 비어있으면 저장 제외 → 새로고침 시 기본값 복원) */
   ['ed-att','ed-title','ed-sub','ed-ctit','ed-dtit'].forEach(function(id){
-    var el=eid(id); s.html[id]=el?el.innerHTML:'';
+    var el=eid(id); if(!el) return;
+    if(id==='ed-att'){
+      var t=(el.innerHTML||'').replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,' ').trim();
+      if(!t) return; /* 빈 강조타이틀 → 저장 생략 → 새로고침 시 기본값 복원 */
+    }
+    s.html[id]=el.innerHTML;
   });
   /* 상세 행 */
   var dr=eid('det-rows'); if(dr) s.detHtml=dr.innerHTML;
@@ -3971,14 +3976,44 @@ function saveCtx(){
   else saveGuideCapture();
 }
 
-/* 공통 캡처 옵션: 에디터 UI 제거 + 외부 CSS 차단 (zoom 이슈는 saveGuideCapture에서 live DOM으로 처리) */
-function _h2cOpts(){
+/* 다크모드 로고 반전 data URL 사전 계산 (html2canvas filter 미지원 대응) */
+function _buildInvertedLogoMap(){
+  var map = {};
+  function canvasInvert(img){
+    if(!img || !img.src || !img.naturalWidth) return null;
+    try{
+      var c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      var ctx = c.getContext('2d');
+      ctx.filter = 'brightness(0) invert(1)';
+      ctx.drawImage(img, 0, 0);
+      return c.toDataURL('image/png');
+    } catch(e){ return null; }
+  }
+  ['jk-img-top','jk-img-bottom'].forEach(function(id){
+    var img = eid(id);
+    if(img && img.style.filter && img.style.filter.indexOf('invert')!==-1){
+      var d = canvasInvert(img);
+      if(d) map[id] = d;
+    }
+  });
+  document.querySelectorAll('.partner-img').forEach(function(img){
+    if(img.style.filter && img.style.filter.indexOf('invert')!==-1){
+      var d = canvasInvert(img);
+      if(d) map[img.id || ('__p'+Math.random())] = { src:d, el:img };
+    }
+  });
+  return map;
+}
+
+/* 공통 캡처 옵션: 에디터 UI 제거 + 외부 CSS 차단 */
+function _h2cOpts(invertedLogos){
   return {
     scale:1, useCORS:true, allowTaint:true, backgroundColor:null, logging:false, imageTimeout:3000,
     onclone: function(doc){
       doc.querySelectorAll('link[rel="stylesheet"]').forEach(function(l){ l.remove(); });
 
-      /* ── [Fix1] 부모 overflow 클리핑 해제: clone 렌더링 시 guide-root 잘림 방지 ── */
+      /* ── [Fix1] 부모 overflow 클리핑 해제 ── */
       var ca = doc.getElementById('canvas-area');
       if(ca){ ca.style.overflow='visible'; ca.style.width='1400px'; }
       var ew = doc.getElementById('editor-wrap-id');
@@ -3986,14 +4021,32 @@ function _h2cOpts(){
       if(doc.documentElement) doc.documentElement.style.width='1400px';
       if(doc.body) doc.body.style.width='1400px';
 
-      /* ── [Fix2] guide-root: box-shadow 제거 + guide 내부 인라인 box-shadow도 모두 제거 ── */
+      /* ── [Fix2] guide-root box-shadow + 자식 인라인 box-shadow 제거 ── */
       var gr = doc.getElementById('guide-root');
       if(gr){
         gr.classList.remove('ed-mode');
         gr.style.boxShadow = 'none';
-        /* 카드 등 자식 요소 인라인 box-shadow → html2canvas에서 진하게 렌더되는 버그 방지 */
         gr.querySelectorAll('[style*="box-shadow"]').forEach(function(el){
           el.style.boxShadow = 'none';
+        });
+      }
+
+      /* ── [Fix3] 다크 로고: html2canvas filter 미지원 → 사전 반전 data URL로 교체 ── */
+      if(invertedLogos){
+        Object.keys(invertedLogos).forEach(function(id){
+          var val = invertedLogos[id];
+          if(typeof val === 'string'){
+            var img = doc.getElementById(id);
+            if(img){ img.src = val; img.style.filter = ''; }
+          } else if(val && val.src){
+            /* partner-img: id 없는 경우 위치로 매칭 */
+            var imgs = doc.querySelectorAll('.partner-img');
+            imgs.forEach(function(img){
+              if(img.alt === (val.el && val.el.alt)){
+                img.src = val.src; img.style.filter = '';
+              }
+            });
+          }
         });
       }
 
@@ -4005,34 +4058,23 @@ function _h2cOpts(){
       var ilPh = doc.getElementById('il-placeholder');
       if(ilPh) ilPh.style.display = 'none';
 
-      /* ── [Fix3] placeholder 완전 제거: data-ph 속성 삭제 → content:attr(data-ph) 무력화 ── */
+      /* ── placeholder ::before 무력화 ── */
       doc.querySelectorAll('[data-ph]').forEach(function(el){ el.removeAttribute('data-ph'); });
-      /* CSS ::before / :has() / :empty 셀렉터가 html2canvas 미지원이므로 JS로 직접 강제 처리 */
-      var extraStyle = doc.createElement('style');
-      extraStyle.textContent = [
-        '.ed::before{content:none!important;display:none!important;}',
-        /* :has(), :empty 미지원 대비 att-wrap/ed-att 직접 숨김 fallback CSS */
-        '#att-wrap{display:none!important;}',
-        '#ed-att{display:none!important;}'
-      ].join('');
-      doc.head.appendChild(extraStyle);
+      var noPhStyle = doc.createElement('style');
+      noPhStyle.textContent = '.ed::before{content:none!important;display:none!important;}';
+      doc.head.appendChild(noPhStyle);
 
-      /* ── 강조 타이틀: 실제 텍스트가 있으면 다시 표시 (inline style > CSS) ── */
+      /* ── [Fix4] 강조타이틀: 빈 경우 DOM에서 물리 제거 (CSS :has 미지원 완전 대응) ── */
       var edAtt = doc.getElementById('ed-att');
       var attWrap = doc.getElementById('att-wrap');
-      if(edAtt){
-        /* innerHTML에서 <br>·&nbsp; 제거 후 실제 텍스트 확인 */
-        var rawHtml = edAtt.innerHTML.replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,' ').trim();
-        var hasContent = rawHtml.length > 0;
-        if(hasContent){
-          /* 내용이 있으면 att-wrap/ed-att 복원 */
-          if(attWrap) attWrap.style.setProperty('display','flex','important');
-          edAtt.style.setProperty('display','block','important');
+      if(edAtt && attWrap){
+        var rawText = (edAtt.innerHTML||'').replace(/<br\s*\/?>/gi,'').replace(/&nbsp;/gi,' ').trim();
+        if(!rawText){
+          attWrap.parentNode && attWrap.parentNode.removeChild(attWrap);
         }
-        /* 없으면 위 CSS (display:none!important)가 그대로 적용됨 */
       }
 
-      /* ── contenteditable 제거 + 편집 흔적 제거 ── */
+      /* ── contenteditable 제거 ── */
       doc.querySelectorAll('[contenteditable]').forEach(function(el){
         el.removeAttribute('contenteditable');
         el.style.outline='none'; el.style.boxShadow='none'; el.style.border='none';
@@ -4041,22 +4083,23 @@ function _h2cOpts(){
   };
 }
 
-/* 안내문 저장: html2canvas → PNG Blob → 메모리
-   ★ zoom을 live DOM에서 직접 해제 후 캡처 → html2canvas bounding rect가 900px로 잡힘
-      onclone에서 zoom 제거 시 bounding rect는 이미 zoomed 값으로 고정되어 오른쪽이 잘리는 버그 방지 */
+/* 안내문 저장: zoom live DOM 해제 → bounding rect 900px 확정 → 캡처 → 복원 */
 function saveGuideCapture(){
   var btn = eid('btn-save-ctx');
   if(btn){ btn.disabled=true; btn.textContent='캡처 중…'; }
   var gr = eid('guide-root');
   if(!gr){ if(btn){btn.disabled=false;btn.textContent='안내문 저장';} return; }
 
-  /* ① live DOM에서 zoom 해제 + ed-mode 제거 */
+  /* ① 다크 로고 반전 data URL 사전 계산 */
+  var invertedLogos = _buildInvertedLogoMap();
+
+  /* ② live DOM zoom 해제 + ed-mode 제거 */
   var savedZoom = gr.style.zoom || '';
   var hadEdMode = gr.classList.contains('ed-mode');
   gr.style.zoom = '';
   gr.classList.remove('ed-mode');
 
-  /* ② 두 번의 rAF로 레이아웃 확정 후 캡처 */
+  /* ③ 두 번의 rAF로 레이아웃 확정 후 캡처 */
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
 
@@ -4066,7 +4109,7 @@ function saveGuideCapture(){
         fitGuideRoot();
       }
 
-      _h2c(gr, _h2cOpts(), 30000)
+      _h2c(gr, _h2cOpts(invertedLogos), 30000)
         .then(function(canvas){
           restore();
           canvas.toBlob(function(blob){
