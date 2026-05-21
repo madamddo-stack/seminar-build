@@ -4141,8 +4141,14 @@ function saveGuideCapture(){
           canvas.toBlob(function(blob){
             if(window._pvData.guide) URL.revokeObjectURL(window._pvData.guide.url);
             window._pvData.guide = { url: URL.createObjectURL(blob), ts: Date.now() };
-            showToast('✅ 안내문 저장 완료');
             if(btn){btn.disabled=false;btn.textContent='안내문 저장';}
+            /* 배너도 이미 저장된 상태면 자동으로 히스토리 추가 */
+            if(Object.keys(window._pvData.banners).length > 0){
+              showToast('✅ 안내문+배너 완료 — 히스토리에 저장됨');
+              saveHistory();
+            } else {
+              showToast('✅ 안내문 저장 완료');
+            }
           }, 'image/png');
         })
         .catch(function(e){
@@ -4179,7 +4185,13 @@ function saveBannerCapture(){
     if(++done < total) return;
     if(bpHidden&&bp) bp.style.cssText='display:none;';
     if(btn){btn.disabled=false;btn.textContent='배너 저장';}
-    showToast('✅ 배너 저장 완료');
+    /* 안내문도 이미 저장된 상태면 자동으로 히스토리 추가 */
+    if(window._pvData.guide){
+      showToast('✅ 안내문+배너 완료 — 히스토리에 저장됨');
+      saveHistory();
+    } else {
+      showToast('✅ 배너 저장 완료');
+    }
   }
   /* 4종 순차 캡처: 각 배너마다 transform 제거→캡처→복원 */
   var queue = TYPES.filter(function(t){ return !!eid('bn-stage-'+t); });
