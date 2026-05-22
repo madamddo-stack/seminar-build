@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/seminar_builder_v4.html" }
+    { "source": "/v2", "destination": "/seminar_builder_v4.html" }
   ]
 }
