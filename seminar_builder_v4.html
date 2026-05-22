@@ -2954,11 +2954,10 @@ function rV200(d){
       bnImg(160, 108, d.img, 'v200')+
     '</div>'+
     /* 버튼: 하단 고정
-       padding-top:(38-20)/2=9px + line-height:0 + vertical-align:top
-       → 폰트 메트릭 무관하게 정확히 수직 중앙 (html2canvas 안전 방식) */
-    '<div style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';z-index:3;text-align:center;box-sizing:border-box;padding-top:9px;line-height:0;overflow:hidden;">'+
-      '<span style="display:inline-block;vertical-align:top;line-height:20px;color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
-      bnArrow(d.btnTc, 20, 'top')+
+       display:flex → 에디터 정상; html2canvas 캡처 시 onclone에서 line-height 방식으로 변환 */
+    '<div class="bn-v-btn" data-h="38" data-mt="-3" style="position:absolute;bottom:0;left:0;width:200px;height:38px;background:'+d.btnBg+';z-index:3;display:flex;align-items:center;justify-content:center;">'+
+      '<span style="color:'+d.btnTc+';font-size:14px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
+      bnArrow(d.btnTc, 20, 'middle')+
     '</div>'+
   '</div>';
 }
@@ -2985,10 +2984,10 @@ function rV170(d){
       bnImg(131, 68, d.img, 'v170')+
     '</div>'+
     /* 버튼: 하단 고정
-       padding-top:(36-18)/2=9px + line-height:0 + vertical-align:top */
-    '<div style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';z-index:3;text-align:center;box-sizing:border-box;padding-top:9px;line-height:0;overflow:hidden;">'+
-      '<span style="display:inline-block;vertical-align:top;line-height:18px;color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
-      bnArrow(d.btnTc, 18, 'top')+
+       display:flex → 에디터 정상; html2canvas 캡처 시 onclone에서 line-height 방식으로 변환 */
+    '<div class="bn-v-btn" data-h="36" data-mt="-3" style="position:absolute;bottom:0;left:0;width:170px;height:36px;background:'+d.btnBg+';z-index:3;display:flex;align-items:center;justify-content:center;">'+
+      '<span style="color:'+d.btnTc+';font-size:13px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;margin-right:4px;">'+escHtml(d.btnTxt)+'</span>'+
+      bnArrow(d.btnTc, 18, 'middle')+
     '</div>'+
   '</div>';
 }
@@ -3031,7 +3030,7 @@ function rStrip(d){
     '<div style="margin-left:194px;flex:1;display:flex;align-items:center;gap:14px;overflow:hidden;z-index:2;">'+
       '<div style="flex:1;font-size:'+titSz+'px;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;line-height:1.2;">'+titleInner+'</div>'+
       /* 좌측 padding = 우측 + (gap+arrow)/2 로 텍스트+화살표 그룹 시각 중앙 정렬 */
-      '<div style="background:'+d.btnBg+';border-radius:30px;display:flex;align-items:center;justify-content:center;padding:9px 14px 9px 26px;gap:2px;flex-shrink:0;">'+
+      '<div class="bn-v-btn-pill" data-mt="-3" style="background:'+d.btnBg+';border-radius:30px;display:flex;align-items:center;justify-content:center;padding:9px 14px 9px 26px;gap:2px;flex-shrink:0;">'+
         '<span style="color:'+d.btnTc+';font-size:18px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 21)+
       '</div>'+
@@ -3068,7 +3067,7 @@ function rNews(d){
         '<div style="font-size:24px;font-weight:400;color:'+d.subClr+';line-height:1.2;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;">'+escHtml(hash1)+'&ensp;'+escHtml(hash2)+'</div>'+
       '</div>'+
       /* 좌측 padding = 우측 + (gap+arrow)/2 로 텍스트+화살표 그룹 시각 중앙 정렬 */
-      '<div style="display:inline-flex;align-items:center;justify-content:center;background:'+d.btnBg+';border-radius:60px;padding:9px 18px 9px 35px;gap:2px;flex-shrink:0;">'+
+      '<div class="bn-v-btn-pill" data-mt="-2" style="display:inline-flex;align-items:center;justify-content:center;background:'+d.btnBg+';border-radius:60px;padding:9px 18px 9px 35px;gap:2px;flex-shrink:0;">'+
         '<span style="color:'+d.btnTc+';font-size:24px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 32)+
       '</div>'+
@@ -3108,7 +3107,35 @@ function toBlob(type){
           }
         }
         /* scale:1 → 스펙 픽셀 크기 그대로 출력 (200×275 등) */
-        html2canvas(el, { scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false })
+        html2canvas(el, {
+          scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false,
+          onclone: function(clonedDoc, clonedEl){
+            /* html2canvas: position:absolute 내 flex align-items:center 미지원
+               → .bn-v-btn을 line-height 방식으로 변환 + 배너별 개별 보정값(data-mt) 적용 */
+            clonedEl.querySelectorAll('.bn-v-btn').forEach(function(btn){
+              var h  = parseInt(btn.getAttribute('data-h'))||38;
+              var mt = parseInt(btn.getAttribute('data-mt'))||0;
+              btn.style.display    = 'block';
+              btn.style.lineHeight = h+'px';
+              btn.style.textAlign  = 'center';
+              btn.style.whiteSpace = 'nowrap';
+              btn.style.overflow   = 'hidden';
+              Array.from(btn.children).forEach(function(c){
+                c.style.display       = 'inline-block';
+                c.style.verticalAlign = 'middle';
+                c.style.marginTop     = mt+'px';
+                if(c.tagName === 'SPAN') c.style.lineHeight = 'normal';
+              });
+            });
+            /* strip/news pill 버튼: 개별 보정값(data-mt)만 적용 */
+            clonedEl.querySelectorAll('.bn-v-btn-pill').forEach(function(btn){
+              var mt = parseInt(btn.getAttribute('data-mt'))||0;
+              Array.from(btn.children).forEach(function(c){
+                c.style.marginTop = mt+'px';
+              });
+            });
+          }
+        })
           .then(function(canvas){ restore(); resolve(canvas); })
           .catch(function(e){ restore(); reject(e); });
       });
@@ -4175,7 +4202,35 @@ function saveBannerCapture(){
   if(bpHidden){ bp.style.cssText='display:block;position:fixed;top:-30000px;left:0;width:1200px;'; }
   var TYPES  = ['v200','v170','strip','news'];
   var LABELS = {v200:'기업라운지 좌측 · 200×275',v170:'기업검색 좌측 · 170×235',strip:'기업라운지 띠 · 940×80',news:'뉴스레터 · 535×274'};
-  var opts   = { scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false };
+  var opts   = {
+    scale:1, useCORS:true, allowTaint:false, backgroundColor:null, logging:false,
+    onclone: function(clonedDoc, clonedEl){
+      /* html2canvas: position:absolute 내 flex align-items:center 미지원
+         → .bn-v-btn을 line-height 방식으로 변환 + 배너별 개별 보정값(data-mt) 적용 */
+      clonedEl.querySelectorAll('.bn-v-btn').forEach(function(btn){
+        var h  = parseInt(btn.getAttribute('data-h'))||38;
+        var mt = parseInt(btn.getAttribute('data-mt'))||0;
+        btn.style.display    = 'block';
+        btn.style.lineHeight = h+'px';
+        btn.style.textAlign  = 'center';
+        btn.style.whiteSpace = 'nowrap';
+        btn.style.overflow   = 'hidden';
+        Array.from(btn.children).forEach(function(c){
+          c.style.display       = 'inline-block';
+          c.style.verticalAlign = 'middle';
+          c.style.marginTop     = mt+'px';
+          if(c.tagName === 'SPAN') c.style.lineHeight = 'normal';
+        });
+      });
+      /* strip/news pill 버튼: 개별 보정값(data-mt)만 적용 */
+      clonedEl.querySelectorAll('.bn-v-btn-pill').forEach(function(btn){
+        var mt = parseInt(btn.getAttribute('data-mt'))||0;
+        Array.from(btn.children).forEach(function(c){
+          c.style.marginTop = mt+'px';
+        });
+      });
+    }
+  };
   var done   = 0; var total = 0;
   TYPES.forEach(function(t){ if(eid('bn-stage-'+t)) total++; });
   if(!total){
