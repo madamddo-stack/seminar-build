@@ -3030,7 +3030,8 @@ function rStrip(d){
     /* 텍스트 + 버튼 영역: 이미지 우측에서 시작 */
     '<div style="margin-left:194px;flex:1;display:flex;align-items:center;gap:14px;overflow:hidden;z-index:2;">'+
       '<div style="flex:1;font-size:'+titSz+'px;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;line-height:1.2;">'+titleInner+'</div>'+
-      '<div style="background:'+d.btnBg+';border-radius:30px;display:flex;align-items:center;justify-content:center;padding:9px 14px;gap:6px;flex-shrink:0;">'+
+      /* 좌측 padding = 우측 + (gap+arrow)/2 로 텍스트+화살표 그룹 시각 중앙 정렬 */
+      '<div style="background:'+d.btnBg+';border-radius:30px;display:flex;align-items:center;justify-content:center;padding:9px 14px 9px 26px;gap:2px;flex-shrink:0;">'+
         '<span style="color:'+d.btnTc+';font-size:18px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 21)+
       '</div>'+
@@ -3066,7 +3067,8 @@ function rNews(d){
         '<div style="display:flex;flex-direction:column;gap:0;">'+titleHtml+'</div>'+
         '<div style="font-size:24px;font-weight:400;color:'+d.subClr+';line-height:1.2;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;word-break:keep-all;overflow-wrap:anywhere;">'+escHtml(hash1)+'&ensp;'+escHtml(hash2)+'</div>'+
       '</div>'+
-      '<div style="display:inline-flex;align-items:center;justify-content:center;background:'+d.btnBg+';border-radius:60px;padding:9px 18px;gap:4px;flex-shrink:0;">'+
+      /* 좌측 padding = 우측 + (gap+arrow)/2 로 텍스트+화살표 그룹 시각 중앙 정렬 */
+      '<div style="display:inline-flex;align-items:center;justify-content:center;background:'+d.btnBg+';border-radius:60px;padding:9px 18px 9px 35px;gap:2px;flex-shrink:0;">'+
         '<span style="color:'+d.btnTc+';font-size:24px;font-weight:600;font-family:\'Paperlogy\',\'Noto Sans KR\',sans-serif;white-space:nowrap;line-height:1;">'+escHtml(d.btnTxt)+'</span>'+
         bnArrow(d.btnTc, 32)+
       '</div>'+
